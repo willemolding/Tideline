@@ -2,6 +2,7 @@
   "uuid": "c54d0be0-5923-4027-b6ed-5e4d8d7202b5",
   "shortName": "pebtides_time",
   "longName": "pebtides_time",
+  "capabilities": [ "configurable" ],
   "companyName": "WillemOlding",
   "versionCode": 1,
   "versionLabel": "1.0",

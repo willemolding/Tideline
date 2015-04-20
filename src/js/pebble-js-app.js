@@ -3,7 +3,7 @@ Pebble.addEventListener("ready",
     function(e) {
         console.log("Hello world! - Sent from your javascript application.");
 
-        Pebble.getTimelineToken(
+      Pebble.getTimelineToken(
 		  function (token) {
 		    console.log('My timeline token is ' + token);
 
@@ -19,7 +19,15 @@ Pebble.addEventListener("ready",
 
 Pebble.addEventListener('showConfiguration', function(e) {
   // Show config page
-  Pebble.openURL('https://my-website.com/config-page.html');
+  Pebble.getTimelineToken(
+      function (token) {
+        console.log('showing configuration page.');
+        Pebble.openURL('http://pebtides-time.herokuapp.com/configure?token='+token);
+      },
+      function (error) { 
+        console.log('Error getting timeline token: ' + error);
+      }
+    );
 });
 
 
