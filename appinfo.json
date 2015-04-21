@@ -12,7 +12,12 @@
     "watchface": false
   },
   "appKeys": {
-    "dummy": 0
+    "NAME": 0,
+    "N_POINTS": 1,
+    "HEIGHTS": 2,
+    "TIMES": 3,
+    "UNITS": 4,
+    "DATA_AVAILABLE": 5
   },
   "resources": {
     "media": []

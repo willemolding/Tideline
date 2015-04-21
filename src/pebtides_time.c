@@ -1,25 +1,54 @@
 #include <pebble.h>
 
+enum {
+    NAME,
+    N_POINTS,
+    HEIGHTS,
+    TIMES,
+    UNITS,
+    DATA_AVAILABLE
+  };
+
 static Window *window;
 static TextLayer *text_layer;
 
-static void select_click_handler(ClickRecognizerRef recognizer, void *context) {
-  text_layer_set_text(text_layer, "Select");
+static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
+  APP_LOG(APP_LOG_LEVEL_INFO, "Message received!");
+
+   // incoming message received
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Message was received");
+
+  Tuple *tuple = dict_read_first(iterator);
+
+  //read in the data from the message using the dictionary iterator
+  while (tuple) 
+  {
+    switch (tuple->key) 
+    {
+      case NAME:
+        break;
+      case N_POINTS:
+        break;
+      case HEIGHTS:
+        break;
+      case TIMES:
+        break;
+      case UNITS:
+        break;
+      case DATA_AVAILABLE:
+        break;
+    }
+
+    tuple = dict_read_next(iterator);
+  }
+
+  layer_mark_dirty(window_get_root_layer(window));
 }
 
-static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
-  text_layer_set_text(text_layer, "Up");
+static void inbox_dropped_callback(AppMessageResult reason, void *context) {
+  APP_LOG(APP_LOG_LEVEL_ERROR, "Message dropped!");
 }
 
-static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
-  text_layer_set_text(text_layer, "Down");
-}
-
-static void click_config_provider(void *context) {
-  window_single_click_subscribe(BUTTON_ID_SELECT, select_click_handler);
-  window_single_click_subscribe(BUTTON_ID_UP, up_click_handler);
-  window_single_click_subscribe(BUTTON_ID_DOWN, down_click_handler);
-}
 
 static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
@@ -36,14 +65,20 @@ static void window_unload(Window *window) {
 }
 
 static void init(void) {
+
   window = window_create();
-  window_set_click_config_provider(window, click_config_provider);
   window_set_window_handlers(window, (WindowHandlers) {
     .load = window_load,
     .unload = window_unload,
   });
   const bool animated = true;
   window_stack_push(window, animated);
+
+  app_message_register_inbox_received(inbox_received_callback);
+  app_message_register_inbox_dropped(inbox_dropped_callback);
+  //open app message
+  app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
+
 }
 
 static void deinit(void) {
