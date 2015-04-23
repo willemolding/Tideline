@@ -20,6 +20,12 @@
     "DATA_AVAILABLE": 5
   },
   "resources": {
-    "media": []
+    "media": [
+    {
+      "type":"raw",
+      "name":"ANIMATION",
+      "file":"loader.png"
+    }
+  ]
   }
 }
