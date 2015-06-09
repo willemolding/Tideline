@@ -1,19 +1,26 @@
 #include <pebble.h>
+#include "tide_data.h"
+
+#define MAX_TIDE_EVENTS 4
+#define MAX_NAME_LENGTH 20
 
 enum {
     NAME,
-    N_POINTS,
-    HEIGHTS,
-    TIMES,
-    UNITS,
-    DATA_AVAILABLE
+    UNIT,
+    N_EVENTS,
+    DATA
   };
 
 static Window *window;
 static TextLayer *text_layer;
 
+static TideEvent tide_data[MAX_TIDE_EVENTS];
+static char name[MAX_NAME_LENGTH];
+static char unit[3];
+static int n_events = 0;
+
+
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
-  APP_LOG(APP_LOG_LEVEL_INFO, "Message received!");
 
    // incoming message received
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Message was received");
@@ -26,22 +33,27 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     switch (tuple->key) 
     {
       case NAME:
+        strcpy(name,tuple->value->cstring);
         break;
-      case N_POINTS:
+      case UNIT:
+        strcpy(unit,tuple->value->cstring);
         break;
-      case HEIGHTS:
-        break;
-      case TIMES:
-        break;
-      case UNITS:
-        break;
-      case DATA_AVAILABLE:
+      case N_EVENTS:
+        n_events = tuple->value->int32;
+      case DATA:
+        APP_LOG(APP_LOG_LEVEL_DEBUG,"n_events : %d", n_events);
+        memcpy(tide_data, tuple->value->data, n_events*sizeof(TideEvent));
         break;
     }
 
     tuple = dict_read_next(iterator);
   }
 
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Name: %s, n_events : %d, unit : %s", name, n_events, unit);
+  for(int i=0; i < n_events; i++)
+  {
+      APP_LOG(APP_LOG_LEVEL_DEBUG, "time: %d, height : %d, event : %d", tide_data[i].event.timestamp, tide_data[i].event.height_100, tide_data[i].event.is_high_tide);
+  }
   layer_mark_dirty(window_get_root_layer(window));
 }
 

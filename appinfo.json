@@ -2,30 +2,21 @@
   "uuid": "c54d0be0-5923-4027-b6ed-5e4d8d7202b5",
   "shortName": "pebtides_time",
   "longName": "pebtides_time",
-  "capabilities": [ "configurable" ],
+  "capabilities": [ "configurable", "location" ],
   "companyName": "WillemOlding",
-  "versionCode": 1,
   "versionLabel": "1.0",
   "sdkVersion": "3",
-  "targetPlatforms": ["basalt"],
+  "targetPlatforms": ["aplite", "basalt"],
   "watchapp": {
     "watchface": false
   },
   "appKeys": {
     "NAME": 0,
-    "N_POINTS": 1,
-    "HEIGHTS": 2,
-    "TIMES": 3,
-    "UNITS": 4,
-    "DATA_AVAILABLE": 5
+    "UNIT": 1,
+    "N_EVENTS": 2,
+    "DATA": 3
   },
   "resources": {
-    "media": [
-    {
-      "type":"raw",
-      "name":"ANIMATION",
-      "file":"loader.png"
-    }
-  ]
+    "media": []
   }
 }
