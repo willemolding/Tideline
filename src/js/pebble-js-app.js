@@ -52,7 +52,7 @@ function send_data_to_pebble(response){
     tide_event = response.tide_data[tide_event_index];
     console.log(JSON.stringify(tide_event));
 
-    times = times.concat(getInt32Bytes(tide_event.time));
+    times = times.concat(getInt32Bytes(tide_event.local_time));
     heights = heights.concat(getInt32Bytes(tide_event.height * 100));
 
     unit = tide_event.unit;

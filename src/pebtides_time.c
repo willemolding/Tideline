@@ -29,6 +29,8 @@ static char name[MAX_NAME_LENGTH];
 static char unit[3];
 static int n_events = 0;
 
+static char timestring[20];
+
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
 
@@ -69,7 +71,11 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   for(int i=0; i < n_events; i++)
   {
       APP_LOG(APP_LOG_LEVEL_DEBUG, "time: %d, height : %d, event : %d", times.values[i], heights.values[i], events[i]);
+      time_t t = times.values[i];
+      strftime(timestring, 20, "%x - %I:%M%p", localtime(&t));
+      APP_LOG(APP_LOG_LEVEL_DEBUG, "%s", timestring);
   }
+
   layer_mark_dirty(window_get_root_layer(window));
 }
 
@@ -83,7 +89,7 @@ static void window_load(Window *window) {
   GRect bounds = layer_get_bounds(window_layer);
 
   text_layer = text_layer_create((GRect) { .origin = { 0, 72 }, .size = { bounds.size.w, 20 } });
-  text_layer_set_text(text_layer, "Press a button");
+  text_layer_set_text(text_layer, "No Data");
   text_layer_set_text_alignment(text_layer, GTextAlignmentCenter);
   layer_add_child(window_layer, text_layer_get_layer(text_layer));
 }
