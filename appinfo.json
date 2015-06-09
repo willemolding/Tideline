@@ -14,7 +14,9 @@
     "NAME": 0,
     "UNIT": 1,
     "N_EVENTS": 2,
-    "DATA": 3
+    "TIMES": 3,
+    "HEIGHTS" : 4,
+    "EVENTS" : 5
   },
   "resources": {
     "media": []

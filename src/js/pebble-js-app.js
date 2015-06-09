@@ -27,13 +27,15 @@ function send_pebble_message(message){
     );
 }
 
-function toBytesInt32 (num) {
-    arr = new ArrayBuffer(4); // an Int32 takes 4 bytes
-    view = new DataView(arr);
-    view.setUint32(0, num, false); // byteOffset = 0; litteEndian = false
-    return arr;
+function getInt32Bytes( x ){
+    var bytes = [];
+    var i = 0;
+    for (var i = 0; i < 4; i++){
+      bytes[i] = x & (255);
+      x = x>>8;
+    }
+    return bytes;
 }
-
 
 
 function send_data_to_pebble(response){
@@ -41,28 +43,33 @@ function send_data_to_pebble(response){
     console.log('data from server:');
     console.log(JSON.stringify(response));
 
-  var data = [];
+  var times = [];
+  var heights = [];
+  var events = [];
   var unit = '';
   for (var tide_event_index in response.tide_data){
     //process the tide data into data
     tide_event = response.tide_data[tide_event_index];
     console.log(JSON.stringify(tide_event));
 
-    data.push(tide_event.time);
-    data.push(tide_event.height * 100);
+    times = times.concat(getInt32Bytes(tide_event.time));
+    heights = heights.concat(getInt32Bytes(tide_event.height * 100));
+
     unit = tide_event.unit;
     if(tide_event.event == 'High Tide'){
-      data.push(1);
+      events.push(1);
     }
     else{
-      data.push(0);
+      events.push(0);
     }
   }
 
   var message = { 'NAME' : response.name,
                   'UNIT' : unit,
                   'N_EVENTS' : response.tide_data.length,
-                  'DATA' : data};
+                  'TIMES' : times,
+                  'HEIGHTS' : heights,
+                  'EVENTS' : events};
 
   console.log('pebble message is:');
   console.log(JSON.stringify(message));
