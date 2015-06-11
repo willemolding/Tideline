@@ -72,7 +72,7 @@ function send_data_to_pebble(response){
 
 }
 
-function get_data_for_user(token){
+function get_data_for_user(){
 
     console.log('My token is ' + token);
 
@@ -143,7 +143,7 @@ Pebble.addEventListener('showConfiguration', function(e) {
         console.log('showing configuration page.');
 
         var url;
-        
+
         if(lat !== 0 && lon !== 0) {
           url = site_url+'configure?token='+token+'&timeline='+timeline+'&lat='+lat+'&lon='+lon;
         }
