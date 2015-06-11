@@ -1,21 +1,8 @@
 var site_url = "http://pebtides-time.herokuapp.com/"
+var lat = 0;
+var lon = 0;
 
-var locationOptions = {
-  enableHighAccuracy: true, 
-  maximumAge: 10000, 
-  timeout: 10000
-};
-
-function locationSuccess(pos) {
-  console.log('lat= ' + pos.coords.latitude + ' lon= ' + pos.coords.longitude);
-}
-
-function locationError(err) {
-  console.log('location error (' + err.code + '): ' + err.message);
-}
-
-
-function send_pebble_message(message){
+function send_pebble_message(message) {
   Pebble.sendAppMessage(message,
       function(e) {
         console.log('Send successful.');
@@ -26,7 +13,7 @@ function send_pebble_message(message){
     );
 }
 
-function getInt32Bytes( x ){
+function getInt32Bytes( x ) {
     var bytes = [];
     var i = 0;
     for (var i = 0; i < 4; i++){
@@ -114,6 +101,14 @@ Pebble.addEventListener("ready",
     function(e) {
         console.log("Hello world! - Sent from your javascript application.");
 
+        //request current position
+        navigator.geolocation.getCurrentPosition(function (pos){
+          lat = pos.coords.latitude;
+          lon = pos.coords.longitude;
+        }, function (err){
+            console.log('location error (' + err.code + '): ' + err.message);
+        }, locationOptions);
+
         if(Pebble.getTimelineToken){
             // if the timeline token is available e.g. using a Pebble Time watch
             Pebble.getTimelineToken(
@@ -135,6 +130,13 @@ Pebble.addEventListener("ready",
         
     }
 );
+
+
+var locationOptions = {
+  enableHighAccuracy: false, 
+  maximumAge: 0, 
+  timeout: 1000
+};
 
 
 Pebble.addEventListener('showConfiguration', function(e) {
@@ -162,16 +164,15 @@ Pebble.addEventListener('showConfiguration', function(e) {
 
         //try and get the current location to obtain the nearest sites
         var url;
-
-        navigator.geolocation.getCurrentPosition(function (pos){
-            console.log('lat= ' + pos.coords.latitude + ' lon= ' + pos.coords.longitude);
-            url = site_url+'configure?token='+token+'&timeline='+timeline+'&lat='+pos.coords.latitude+'&lon='+pos.coords.longitude
-        }, function (err){
-            console.log('location error (' + err.code + '): ' + err.message);
-            url = site_url+'configure?token='+token+'&timeline='+timeline;
-        }, locationOptions);
+        if(lat != 0 && lon != 0) {
+          url = site_url+'configure?token='+token+'&timeline='+timeline+'&lat='+lat+'&lon='+lon;
+        }
+        else {
+          url = site_url+'configure?token='+token+'&timeline='+timeline;
+        }
         console.log(url);
         Pebble.openURL(url);
+        
 });
 
 
