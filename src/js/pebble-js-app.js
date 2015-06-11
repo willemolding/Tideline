@@ -1,6 +1,13 @@
-var site_url = "http://pebtides-time.herokuapp.com/"
+var site_url = "http://pebtides-time.herokuapp.com/";
 var lat = 0;
 var lon = 0;
+
+var locationOptions = {
+  enableHighAccuracy: false, 
+  maximumAge: 0, 
+  timeout: 1000
+};
+
 
 function send_pebble_message(message) {
   Pebble.sendAppMessage(message,
@@ -15,7 +22,6 @@ function send_pebble_message(message) {
 
 function getInt32Bytes( x ) {
     var bytes = [];
-    var i = 0;
     for (var i = 0; i < 4; i++){
       bytes[i] = x & (255);
       x = x>>8;
@@ -35,7 +41,7 @@ function send_data_to_pebble(response){
   var unit = '';
   for (var tide_event_index in response.tide_data){
     //process the tide data into data
-    tide_event = response.tide_data[tide_event_index];
+    var tide_event = response.tide_data[tide_event_index];
     console.log(JSON.stringify(tide_event));
 
     times = times.concat(getInt32Bytes(tide_event.local_time));
@@ -92,10 +98,6 @@ function get_data_for_user(token){
     request.send();
 }
 
-function get_token(){
-
-}
-
 Pebble.addEventListener("ready",
   
     function(e) {
@@ -132,39 +134,31 @@ Pebble.addEventListener("ready",
 );
 
 
-var locationOptions = {
-  enableHighAccuracy: false, 
-  maximumAge: 0, 
-  timeout: 1000
-};
-
-
 Pebble.addEventListener('showConfiguration', function(e) {
 
     var timeline = 0;
+    var token = Pebble.getAccountToken();
     if(Pebble.getTimelineToken){
             // if the timeline token is available e.g. using a Pebble Time watch
             Pebble.getTimelineToken(
-                function (token) {
-                    token = token
+                function (timeline_token) {
+                    token = timeline_token;
                     timeline = 1;
                 },
                 function (error) { 
                     console.log('Error getting timeline token: ' + error);
-                    token = Pebble.getAccountToken();
                 }
             );
         }
         else{
             console.log('Timeline token is not available for this watch');
-            token = Pebble.getAccountToken();
         }
 
         console.log('showing configuration page.');
 
         //try and get the current location to obtain the nearest sites
         var url;
-        if(lat != 0 && lon != 0) {
+        if(lat !== 0 && lon !== 0) {
           url = site_url+'configure?token='+token+'&timeline='+timeline+'&lat='+lat+'&lon='+lon;
         }
         else {
