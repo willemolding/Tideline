@@ -1,7 +1,7 @@
 #include <pebble.h>
 
-#define MAX_TIDE_EVENTS 10
-#define MAX_NAME_LENGTH 20
+#define MAX_TIDE_EVENTS 4
+#define MAX_NAME_LENGTH 48
 
 #define LEFT_MARGIN 10
 
@@ -95,10 +95,10 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
         n_events = tuple->value->int32;
         break;
       case TIMES:
-        memcpy(&times, tuple->value->data, sizeof(IntByteArray));
+        memcpy(times.bytes, tuple->value->data, sizeof(IntByteArray));
         break;
       case HEIGHTS:
-        memcpy(&heights, tuple->value->data, sizeof(IntByteArray));
+        memcpy(heights.bytes, tuple->value->data, sizeof(IntByteArray));
         break;
       case EVENTS:
         memcpy(events, tuple->value->data, MAX_TIDE_EVENTS);
@@ -128,7 +128,7 @@ static void window_load(Window *window) {
   GRect bounds = layer_get_bounds(window_layer);
 
   //create the name text layer
-  name_text_layer = text_layer_create((GRect) { .origin = { LEFT_MARGIN, 10 }, .size = { bounds.size.w - LEFT_MARGIN, 20 } });
+  name_text_layer = text_layer_create((GRect) { .origin = { LEFT_MARGIN, 10 }, .size = { bounds.size.w - 40, 30 } });
   text_layer_set_font(name_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
   layer_add_child(window_layer, text_layer_get_layer(name_text_layer));
 
@@ -149,7 +149,8 @@ static void window_load(Window *window) {
   layer_add_child(window_layer, text_layer_get_layer(height_text_layer));
 
   //create the counter text layer
-  counter_text_layer = text_layer_create((GRect) { .origin = { bounds.size.w - 30, 10 }, .size = { bounds.size.w , 20 } });
+  counter_text_layer = text_layer_create((GRect) { .origin = { bounds.size.w - 30, 10 }, .size = { bounds.size.w , 30 } });
+  text_layer_set_font(name_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
   layer_add_child(window_layer, text_layer_get_layer(counter_text_layer));
 }
 
@@ -206,6 +207,7 @@ int main(void) {
   timestring[2] = ' ';
 
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Done initializing, pushed window: %p", window);
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Size of IntByteArray: %d", sizeof(IntByteArray));  
 
   app_event_loop();
   deinit();

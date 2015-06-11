@@ -1,4 +1,3 @@
-//var site_url = "http://131.217.33.190:5000/"
 var site_url = "http://pebtides-time.herokuapp.com/"
 
 var locationOptions = {
