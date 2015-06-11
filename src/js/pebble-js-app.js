@@ -121,18 +121,20 @@ Pebble.addEventListener("ready",
                     console.log('Timeline token obtained.');
                     token = timeline_token;
                     timeline = 1;
+                    get_data_for_user();
                 },
                 function (error) { 
                     console.log('Error getting timeline token: ' + error);
-                    token = Pebble.getAccountToken()
+                    token = Pebble.getAccountToken();
+                    get_data_for_user();
                 }
             );
         }
         else{
             console.log('Timeline token is not available for this watch');
-            token = Pebble.getAccountToken()
+            token = Pebble.getAccountToken();
+            get_data_for_user();
         }
-      get_data_for_user();
     }
 );
 
