@@ -1,6 +1,8 @@
 var site_url = "http://pebtides-time.herokuapp.com/";
 var lat = 0;
 var lon = 0;
+var token = 'not_set';
+var timeline = 0;
 
 var locationOptions = {
   enableHighAccuracy: false, 
@@ -111,59 +113,44 @@ Pebble.addEventListener("ready",
             console.log('location error (' + err.code + '): ' + err.message);
         }, locationOptions);
 
+
         if(Pebble.getTimelineToken){
             // if the timeline token is available e.g. using a Pebble Time watch
             Pebble.getTimelineToken(
-                function (token) {
-                    console.log('Timeline token obtained.');
-                    get_data_for_user(token);
-                },
-                function (error) { 
-                    console.log('Error getting timeline token: ' + error);
-                    get_data_for_user(Pebble.getAccountToken());
-
-                }
-            );
-        }
-        else{
-            console.log('Timeline token is not available for this watch');
-            get_data_for_user(Pebble.getAccountToken());
-        }
-        
-    }
-);
-
-
-Pebble.addEventListener('showConfiguration', function(e) {
-
-    var timeline = 0;
-    var token = Pebble.getAccountToken();
-    if(Pebble.getTimelineToken){
-            // if the timeline token is available e.g. using a Pebble Time watch
-            Pebble.getTimelineToken(
                 function (timeline_token) {
+                    console.log('Timeline token obtained.');
                     token = timeline_token;
                     timeline = 1;
                 },
                 function (error) { 
                     console.log('Error getting timeline token: ' + error);
+                    token = Pebble.getAccountToken()
                 }
             );
         }
         else{
             console.log('Timeline token is not available for this watch');
+            token = Pebble.getAccountToken()
         }
+      get_data_for_user();
+    }
+);
+
+
+
+Pebble.addEventListener('showConfiguration', function(e) {
 
         console.log('showing configuration page.');
 
-        //try and get the current location to obtain the nearest sites
         var url;
+        
         if(lat !== 0 && lon !== 0) {
           url = site_url+'configure?token='+token+'&timeline='+timeline+'&lat='+lat+'&lon='+lon;
         }
         else {
           url = site_url+'configure?token='+token+'&timeline='+timeline;
         }
+
         console.log(url);
         Pebble.openURL(url);
         
