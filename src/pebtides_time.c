@@ -3,7 +3,7 @@
 #define SCREEN_WIDTH 144
 #define SCREEN_HEIGHT 168
 
-#define MAX_TIDE_EVENTS 4
+#define MAX_TIDE_EVENTS 20
 #define MAX_NAME_LENGTH 48
 
 #define MIN_LEVEL 30
@@ -70,14 +70,14 @@ static void update_display_data() {
 
     time_t t = times.values[data_index];
     if(clock_is_24h_style()) {
-      strftime(timestring + 3, 20, "%H:%M", localtime(&t));
+      strftime(timestring + 3, 20, "%H:%M\n%B %d", localtime(&t));
     }
     else {
-      strftime(timestring + 3, 20, "%I:%M %p", localtime(&t));
+      strftime(timestring + 3, 20, "%I:%M %p\n%B %d", localtime(&t));
     }
     text_layer_set_text(at_text_layer, timestring);
 
-    int x = heights.values[data_index];
+    int x = abs(heights.values[data_index]);
     int d1 = x/100;
     int d2 = x/10 - 10*d1;
     int d3 = x - 10*d2 - 100*d1;
@@ -133,7 +133,9 @@ static Animation *create_anim_scroll(int down) {
 
   //first create all the scroll out animations and combine to a spawn animation
   Animation *tide_event_text_layer_out_animation =  create_anim_scroll_out((Layer*) tide_event_text_layer, down);
+  animation_set_duration((Animation*) tide_event_text_layer_out_animation, 150);
   Animation *at_text_layer_out_animation =  create_anim_scroll_out((Layer*) at_text_layer, down);
+  animation_set_duration((Animation*) at_text_layer_out_animation, 150);
 
   Animation *scroll_out = animation_spawn_create(tide_event_text_layer_out_animation,at_text_layer_out_animation, NULL);
 
@@ -146,7 +148,9 @@ static Animation *create_anim_scroll(int down) {
 
   //same with the scoll in animations
   Animation *tide_event_text_layer_in_animation = create_anim_scoll_in((Layer*) tide_event_text_layer, tide_event_text_layer_bounds, down);
+  animation_set_duration((Animation*) tide_event_text_layer_in_animation, 150);
   Animation *at_text_layer_in_animation = create_anim_scoll_in((Layer*) at_text_layer, at_text_layer_bounds, down);
+  animation_set_duration((Animation*) at_text_layer_in_animation, 150);
 
   Animation *scroll_in = animation_spawn_create(tide_event_text_layer_in_animation,at_text_layer_in_animation, NULL);
 
@@ -158,15 +162,15 @@ static Animation *create_anim_scroll(int down) {
   GRect from_frame = layer_get_frame((Layer*) height_text_layer);
   GRect to_frame = GRect(from_frame.origin.x, SCREEN_HEIGHT - level_height, from_frame.size.w, from_frame.size.h);
   PropertyAnimation *shift_height_animation = property_animation_create_layer_frame((Layer*) height_text_layer, &from_frame, &to_frame);
-  animation_set_delay((Animation*) shift_height_animation, 250);
-  animation_set_duration((Animation*) shift_height_animation, 1500);
+  animation_set_delay((Animation*) shift_height_animation, 150);
+  animation_set_duration((Animation*) shift_height_animation, 1000);
 
 
   GRect from_frame_blue = layer_get_frame((Layer*) blue_layer);
   GRect to_frame_blue = GRect(from_frame_blue.origin.x, SCREEN_HEIGHT - level_height, from_frame_blue.size.w, from_frame_blue.size.h);
   PropertyAnimation *shift_blue_animation = property_animation_create_layer_frame((Layer*) blue_layer, &from_frame_blue, &to_frame_blue);
-  animation_set_delay((Animation*) shift_blue_animation, 250);
-  animation_set_duration((Animation*) shift_blue_animation, 1500);
+  animation_set_delay((Animation*) shift_blue_animation, 150);
+  animation_set_duration((Animation*) shift_blue_animation, 1000);
 
   return animation_spawn_create(scroll_in_and_out, (Animation*) shift_height_animation, (Animation*) shift_blue_animation, NULL);
   //return (Animation*) shift_height_animation;
@@ -283,8 +287,8 @@ static void window_load(Window *window) {
 
 
   //create the name text layer
-  name_text_layer = text_layer_create((GRect) { .origin = { LEFT_MARGIN, 10 }, .size = { bounds.size.w - 40, 30 } });
-  text_layer_set_font(name_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
+  name_text_layer = text_layer_create((GRect) { .origin = { LEFT_MARGIN, 0 }, .size = { bounds.size.w - 40, 30 } });
+  text_layer_set_font(name_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
   text_layer_set_background_color(name_text_layer, GColorClear);
   layer_add_child(window_layer, text_layer_get_layer(name_text_layer));
 
@@ -308,8 +312,8 @@ static void window_load(Window *window) {
   layer_add_child(window_layer, text_layer_get_layer(height_text_layer));
 
   //create the counter text layer
-  counter_text_layer = text_layer_create((GRect) { .origin = { bounds.size.w - 30, 10 }, .size = { bounds.size.w , 30 } });
-  text_layer_set_font(name_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
+  counter_text_layer = text_layer_create((GRect) { .origin = { bounds.size.w - 35, 0}, .size = { bounds.size.w , 30 } });
+  text_layer_set_font(counter_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
   text_layer_set_background_color(counter_text_layer, GColorClear);
   layer_add_child(window_layer, text_layer_get_layer(counter_text_layer));
 
