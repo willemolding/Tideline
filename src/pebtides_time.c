@@ -157,10 +157,15 @@ static Animation *create_anim_scroll(int down) {
   GRect from_frame = layer_get_frame((Layer*) height_text_layer);
   GRect to_frame = GRect(from_frame.origin.x, SCREEN_HEIGHT - level_height, from_frame.size.w, from_frame.size.h);
   PropertyAnimation *shift_height_animation = property_animation_create_layer_frame((Layer*) height_text_layer, &from_frame, &to_frame);
+  animation_set_delay((Animation*) shift_height_animation, 250);
+  animation_set_duration((Animation*) shift_height_animation, 1500);
+
 
   GRect from_frame_blue = layer_get_frame((Layer*) blue_layer);
   GRect to_frame_blue = GRect(from_frame_blue.origin.x, SCREEN_HEIGHT - level_height, from_frame_blue.size.w, from_frame_blue.size.h);
   PropertyAnimation *shift_blue_animation = property_animation_create_layer_frame((Layer*) blue_layer, &from_frame_blue, &to_frame_blue);
+  animation_set_delay((Animation*) shift_blue_animation, 250);
+  animation_set_duration((Animation*) shift_blue_animation, 1500);
 
   return animation_spawn_create(scroll_in_and_out, (Animation*) shift_height_animation, (Animation*) shift_blue_animation, NULL);
   //return (Animation*) shift_height_animation;
@@ -230,7 +235,7 @@ static void inbox_dropped_callback(AppMessageResult reason, void *context) {
 static void blue_layer_update_callback(Layer *layer, GContext *ctx) {
   GRect bounds = layer_get_bounds(layer);
   graphics_context_set_fill_color(ctx, GColorPictonBlue);
-  graphics_fill_rect(ctx, GRect(bounds.origin.x, bounds.origin.y + SCREEN_HEIGHT - level_height, bounds.size.w, bounds.size.h), 0, GCornerNone);
+  graphics_fill_rect(ctx, bounds, 0, GCornerNone);
 }
 
 
