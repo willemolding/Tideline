@@ -6,7 +6,10 @@
 #define MAX_TIDE_EVENTS 4
 #define MAX_NAME_LENGTH 48
 
-#define LEFT_MARGIN 10
+#define MIN_LEVEL 30
+#define MAX_LEVEL 130
+
+#define LEFT_MARGIN 5
 
 enum {
     NAME,
@@ -51,6 +54,9 @@ static char height_text[10];
 
 static int data_index = 0;
 static int has_data = 0;
+static int level_height = SCREEN_HEIGHT/2; // how many pixels above the bottom to draw the blue layer
+static int min_height = 10000;
+static int max_height = 0;
 
 static void update_display_data() {
     text_layer_set_text(name_text_layer, name);
@@ -75,7 +81,7 @@ static void update_display_data() {
     int d2 = x/10 - 10*d1;
     int d3 = x - 10*d2 - 100*d1;
 
-    snprintf(height_text,10,"%d.%d%d %s",d1,d2,d3, unit);    
+    snprintf(height_text,10,"%d.%d%d%s",d1,d2,d3, unit);    
     text_layer_set_text(height_text_layer, height_text);
 
     snprintf(counter_text,6,"%d/%d",data_index + 1, n_events);    
@@ -113,7 +119,7 @@ static Animation *create_anim_scoll_in(Layer *layer, GRect dest, int up) {
 }
 
 void animation_started(Animation *animation, void *data) {
-   // Animation started!
+  // Animation started!
 
 }
 
@@ -144,12 +150,21 @@ static Animation *create_anim_scroll(int down) {
   Animation *scroll_in = animation_spawn_create(tide_event_text_layer_in_animation,at_text_layer_in_animation, NULL);
 
   //create a sequence animation from the scroll out and scroll in
-  return animation_sequence_create(scroll_out, scroll_in, NULL);
+  Animation *scroll_in_and_out = animation_sequence_create(scroll_out, scroll_in, NULL);
 
+  //also shift the height to the correct level
+  level_height = ((heights.values[data_index] - min_height)*(MAX_LEVEL - MIN_LEVEL))/(max_height-min_height) + MIN_LEVEL;
+  GRect from_frame = layer_get_frame((Layer*) height_text_layer);
+  GRect to_frame = GRect(from_frame.origin.x, SCREEN_HEIGHT - level_height, from_frame.size.w, from_frame.size.h);
+  PropertyAnimation *shift_height_animation = property_animation_create_layer_frame((Layer*) height_text_layer, &from_frame, &to_frame);
+
+  GRect from_frame_blue = layer_get_frame((Layer*) blue_layer);
+  GRect to_frame_blue = GRect(from_frame_blue.origin.x, SCREEN_HEIGHT - level_height, from_frame_blue.size.w, from_frame_blue.size.h);
+  PropertyAnimation *shift_blue_animation = property_animation_create_layer_frame((Layer*) blue_layer, &from_frame_blue, &to_frame_blue);
+
+  return animation_spawn_create(scroll_in_and_out, (Animation*) shift_height_animation, (Animation*) shift_blue_animation, NULL);
+  //return (Animation*) shift_height_animation;
 }
-
-
-
 
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
@@ -188,10 +203,20 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   }
 
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Name: %s, n_events : %d, unit : %s", name, n_events, unit);
+
+  //find the minimum and maximum heights
   for(int i=0; i < n_events; i++)
   {
       APP_LOG(APP_LOG_LEVEL_DEBUG, "time: %d, height : %d, event : %d", times.values[i], heights.values[i], events[i]);
+      if(heights.values[i] < min_height) {
+        min_height = heights.values[i];
+      }
+      if(heights.values[i] > max_height) {
+        max_height = heights.values[i];
+      }
   }
+
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Min height: %d, max_height: %d", min_height, max_height);
 
   has_data = 1;
   update_display_data();
@@ -205,7 +230,7 @@ static void inbox_dropped_callback(AppMessageResult reason, void *context) {
 static void blue_layer_update_callback(Layer *layer, GContext *ctx) {
   GRect bounds = layer_get_bounds(layer);
   graphics_context_set_fill_color(ctx, GColorPictonBlue);
-  graphics_fill_rect(ctx, GRect(bounds.origin.x, bounds.origin.y + SCREEN_HEIGHT/2, bounds.size.w, bounds.size.h), 0, GCornerNone);
+  graphics_fill_rect(ctx, GRect(bounds.origin.x, bounds.origin.y + SCREEN_HEIGHT - level_height, bounds.size.w, bounds.size.h), 0, GCornerNone);
 }
 
 
@@ -240,7 +265,7 @@ static void window_load(Window *window) {
   layer_add_child(window_layer, text_layer_get_layer(at_text_layer));
 
   //create the height text layer
-  height_text_layer = text_layer_create((GRect) { .origin = { LEFT_MARGIN, 120 }, .size = { bounds.size.w - LEFT_MARGIN, 50 } });
+  height_text_layer = text_layer_create((GRect) { .origin = { bounds.size.w - 45, bounds.origin.y + SCREEN_HEIGHT - level_height }, .size = { bounds.size.w - LEFT_MARGIN, 50 } });
   text_layer_set_font(height_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
   text_layer_set_background_color(height_text_layer, GColorClear);
   layer_add_child(window_layer, text_layer_get_layer(height_text_layer));
