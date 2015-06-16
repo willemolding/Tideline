@@ -6,7 +6,7 @@
   "companyName": "WillemOlding",
   "versionLabel": "1.0",
   "sdkVersion": "3",
-  "targetPlatforms": ["aplite", "basalt"],
+  "targetPlatforms": [ "basalt"],
   "watchapp": {
     "watchface": false
   },
