@@ -40,6 +40,7 @@ static char counter_text[6];
 static char height_text[10];
 
 static int data_index = 0;
+static int has_data = 0;
 
 static void update_display_data() {
     text_layer_set_text(name_text_layer, name);
@@ -114,6 +115,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
       APP_LOG(APP_LOG_LEVEL_DEBUG, "time: %d, height : %d, event : %d", times.values[i], heights.values[i], events[i]);
   }
 
+  has_data = 1;
   update_display_data();
   layer_mark_dirty(window_get_root_layer(window));
 }
@@ -159,17 +161,17 @@ static void window_unload(Window *window) {
 }
 
 static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
-  if(data_index > 0) {
+  if(data_index > 0 && has_data) {
     data_index -= 1;
+    update_display_data();
   }
-  update_display_data();
 }
 
 static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
-  if(data_index < (n_events - 1)) {
+  if(data_index < (n_events - 1) && has_data) {
     data_index += 1;
+    update_display_data();
   }
-  update_display_data();
 }
 
 static void click_config_provider() {
