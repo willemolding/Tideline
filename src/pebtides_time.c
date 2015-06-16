@@ -30,6 +30,7 @@ typedef union IntByteArray
 static Window *window;
 
 static Layer *blue_layer;
+static Layer *line_layer;
 
 static TextLayer *name_text_layer;
 static TextLayer *tide_event_text_layer;
@@ -171,6 +172,23 @@ static Animation *create_anim_scroll(int down) {
   //return (Animation*) shift_height_animation;
 }
 
+static Animation *create_anim_load() {
+  //the loading animation for the blue_layer
+  GRect from_frame = layer_get_frame((Layer*) blue_layer);
+  GRect to_frame = GRect(from_frame.origin.x, from_frame.origin.y + 20, from_frame.size.w, from_frame.size.h);
+
+  PropertyAnimation *tide_rise = property_animation_create_layer_frame((Layer*) blue_layer, &from_frame, &to_frame);
+  animation_set_duration((Animation*) tide_rise, 2000);
+
+  PropertyAnimation *tide_fall = property_animation_create_layer_frame((Layer*) blue_layer, &to_frame, &from_frame);
+  animation_set_duration((Animation*) tide_fall, 2000);
+
+  Animation *load_sequence = animation_sequence_create((Animation*) tide_rise, (Animation*) tide_fall, NULL);
+  animation_set_play_count(load_sequence, 20);
+  return load_sequence;
+
+}
+
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
 
@@ -224,7 +242,8 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Min height: %d, max_height: %d", min_height, max_height);
 
   has_data = 1;
-  update_display_data();
+  animation_unschedule_all();
+  animation_schedule(create_anim_scroll(1));
   layer_mark_dirty(window_get_root_layer(window));
 }
 
@@ -238,16 +257,29 @@ static void blue_layer_update_callback(Layer *layer, GContext *ctx) {
   graphics_fill_rect(ctx, bounds, 0, GCornerNone);
 }
 
+static void line_layer_update_callback(Layer *layer, GContext *ctx) {
+  GRect bounds = layer_get_bounds(layer);
+  if(has_data){
+      graphics_context_set_stroke_color(ctx, GColorBlack);
+      graphics_context_set_stroke_width(ctx, 1);
+      graphics_draw_line(ctx, GPoint(LEFT_MARGIN, 32), GPoint(SCREEN_WIDTH - 50, 32));
+  }
+}
+
 
 static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
-  window_set_background_color(window, GColorBrass);
+  window_set_background_color(window, GColorMediumSpringGreen);
   GRect bounds = layer_get_bounds(window_layer);
 
   //add the blue layer at the base
-  blue_layer = layer_create(bounds);
+  blue_layer = layer_create(GRect(bounds.origin.x, SCREEN_HEIGHT - level_height, bounds.size.w, bounds.size.h));
   layer_set_update_proc(blue_layer, blue_layer_update_callback);
   layer_add_child(window_layer, blue_layer);
+
+  line_layer = layer_create(bounds);
+  layer_set_update_proc(line_layer, line_layer_update_callback);
+  layer_add_child(window_layer, line_layer);
 
 
   //create the name text layer
@@ -270,7 +302,7 @@ static void window_load(Window *window) {
   layer_add_child(window_layer, text_layer_get_layer(at_text_layer));
 
   //create the height text layer
-  height_text_layer = text_layer_create((GRect) { .origin = { bounds.size.w - 45, bounds.origin.y + SCREEN_HEIGHT - level_height }, .size = { bounds.size.w - LEFT_MARGIN, 50 } });
+  height_text_layer = text_layer_create((GRect) { .origin = { bounds.size.w - 45, SCREEN_HEIGHT - level_height }, .size = { bounds.size.w - LEFT_MARGIN, 50 } });
   text_layer_set_font(height_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
   text_layer_set_background_color(height_text_layer, GColorClear);
   layer_add_child(window_layer, text_layer_get_layer(height_text_layer));
@@ -280,6 +312,9 @@ static void window_load(Window *window) {
   text_layer_set_font(name_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
   text_layer_set_background_color(counter_text_layer, GColorClear);
   layer_add_child(window_layer, text_layer_get_layer(counter_text_layer));
+
+  //start the loading animation
+  animation_schedule(create_anim_load());
 
 }
 
