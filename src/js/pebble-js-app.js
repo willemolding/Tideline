@@ -213,5 +213,6 @@ Pebble.addEventListener('showConfiguration', function(e) {
 Pebble.addEventListener('webviewclosed',
   function(e) {
     console.log('Configuration window returned: ' + e.response);
+    get_data_for_user();
   }
 );

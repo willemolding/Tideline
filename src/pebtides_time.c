@@ -271,6 +271,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 
   if(n_events > 0){ //if some data points were received there is no error so display the data
     has_data = 1;
+    data_index = 0;
     animation_unschedule_all();
     animation_schedule(create_anim_scroll(1));
   }
@@ -409,7 +410,6 @@ int main(void) {
   timestring[2] = ' ';
 
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Done initializing, pushed window: %p", window);
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Size of IntByteArray: %d", sizeof(IntByteArray));  
 
   app_event_loop();
   deinit();
