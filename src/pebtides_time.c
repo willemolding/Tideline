@@ -308,7 +308,7 @@ static void line_layer_update_callback(Layer *layer, GContext *ctx) {
 static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
 
-  window_set_background_color(window, COLOR_FALLBACK(GColorChromeYellow, GColorWhite));
+  window_set_background_color(window, COLOR_FALLBACK(GColorWhite, GColorWhite));
   GRect bounds = layer_get_bounds(window_layer);
 
   //add the blue layer at the base
