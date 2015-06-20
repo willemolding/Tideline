@@ -1,12 +1,12 @@
 {
   "uuid": "c54d0be0-5923-4027-b6ed-5e4d8d7202b5",
-  "shortName": "pebtides_time",
-  "longName": "pebtides_time",
+  "shortName": "Tideline",
+  "longName": "Tideline",
   "capabilities": [ "configurable", "location" ],
   "companyName": "WillemOlding",
   "versionLabel": "1.0",
   "sdkVersion": "3",
-  "targetPlatforms": [ "basalt"],
+  "targetPlatforms": ["aplite", "basalt"],
   "watchapp": {
     "watchface": false
   },

@@ -3,6 +3,7 @@ var lat = 0;
 var lon = 0;
 var token = 'not_set';
 var timeline = 0;
+var current_watch;
 
 var locationOptions = {
   enableHighAccuracy: false, 
@@ -37,39 +38,61 @@ function send_data_to_pebble(response){
     console.log('data from server:');
     console.log(JSON.stringify(response));
 
-  var times = [];
-  var heights = [];
-  var events = [];
-  var unit = '';
-  for (var tide_event_index in response.tide_data){
-    //process the tide data into data
-    var tide_event = response.tide_data[tide_event_index];
-    console.log(JSON.stringify(tide_event));
+    var times = [];
+    var heights = [];
+    var events = [];
+    var unit = '';
+    for (var tide_event_index in response.tide_data){
+      //process the tide data into data
+      var tide_event = response.tide_data[tide_event_index];
+      console.log(JSON.stringify(tide_event));
 
-    times = times.concat(getInt32Bytes(tide_event.local_time));
-    heights = heights.concat(getInt32Bytes(tide_event.height * 100));
+      //send the local time if the watch is running APLITE as currently this has no timzone correction
+      if(current_watch.platform == 'aplite') {
+            times = times.concat(getInt32Bytes(tide_event.local_time));
+      }
+      else {  //send the UTC time if running BASALT as this has the ability to adjust timezones
+            times = times.concat(getInt32Bytes(tide_event.time));
+      }
 
-    unit = tide_event.unit;
-    if(tide_event.event == 'High Tide'){
-      events.push(1);
+
+      heights = heights.concat(getInt32Bytes(tide_event.height * 100));
+
+      unit = tide_event.unit;
+      if(tide_event.event == 'High Tide'){
+        events.push(1);
+      }
+      else{
+        events.push(0);
+      }
     }
-    else{
-      events.push(0);
-    }
-  }
 
-  var message = { 'NAME' : response.name,
-                  'UNIT' : unit,
-                  'N_EVENTS' : response.tide_data.length,
-                  'TIMES' : times,
-                  'HEIGHTS' : heights,
-                  'EVENTS' : events};
+    var message = { 'NAME' : response.name,
+                    'UNIT' : unit,
+                    'N_EVENTS' : response.tide_data.length,
+                    'TIMES' : times,
+                    'HEIGHTS' : heights,
+                    'EVENTS' : events};
 
-  console.log('pebble message is:');
-  console.log(JSON.stringify(message));
+    console.log('pebble message is:');
+    console.log(JSON.stringify(message));
 
-  send_pebble_message(message);
+    send_pebble_message(message);
 
+}
+
+function send_error_message_to_pebble(error_string){
+    var message = { 'NAME' : error_string,
+                    'UNIT' : '',
+                    'N_EVENTS' : 0,
+                    'TIMES' : [],
+                    'HEIGHTS' : [],
+                    'EVENTS' : []};
+
+    console.log('pebble message is:');
+    console.log(JSON.stringify(message));
+
+    send_pebble_message(message);
 }
 
 function get_data_for_user(){
@@ -88,14 +111,25 @@ function get_data_for_user(){
         var tide_data = JSON.parse(request.responseText);
         send_data_to_pebble(tide_data);
       }
+      else if(request.status == 503){
+        // there are no dynos running to respond
+        console.log('Server is not running');
+        send_error_message_to_pebble("Server Unavailable");
+      }
+      else if(request.status == 500) {
+        console.log('No user with this token');
+        send_error_message_to_pebble("Please open app configuration");
+      }
       else {
-        // We reached our target server, but it returned an error
-        console.log('Server returned an error');
+        console.log('Unknown server error');
+        send_error_message_to_pebble("Server Unavailable");
       }
     };
     request.onerror = function() {
       // There was a connection error of some sort
       console.log('Could not reach server.');
+      //send error message
+      send_error_message_to_pebble("Server Unavailable")
     };
     request.send();
 }
@@ -104,6 +138,23 @@ Pebble.addEventListener("ready",
   
     function(e) {
         console.log("Hello world! - Sent from your javascript application.");
+
+        //determine the current watch info. This is a hack until pebble fixes the bug.
+        if(Pebble.getActiveWatchInfo) {
+          try {
+            current_watch = Pebble.getActiveWatchInfo();
+          } catch(err) {
+            current_watch = {
+              platform: "basalt",
+            };
+          }
+        } else {
+          current_watch = {
+            platform: "aplite",
+          };
+        }
+
+        console.log("running on " + current_watch.platform);
 
         //request current position
         navigator.geolocation.getCurrentPosition(function (pos){

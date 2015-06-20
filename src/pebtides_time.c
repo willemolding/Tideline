@@ -39,7 +39,7 @@ static TextLayer *height_text_layer;
 static TextLayer *counter_text_layer;
 
 #define tide_event_text_layer_bounds (GRect) { .origin = { LEFT_MARGIN, 40 }, .size = { SCREEN_WIDTH - LEFT_MARGIN, 50 } }
-#define at_text_layer_bounds (GRect) { .origin = { LEFT_MARGIN, 80 }, .size = { SCREEN_WIDTH - LEFT_MARGIN, 50 } }
+#define at_text_layer_bounds (GRect) { .origin = { LEFT_MARGIN, 80 }, .size = { SCREEN_WIDTH - LEFT_MARGIN, 53 } }
 
 
 static IntByteArray times;
@@ -128,6 +128,8 @@ void animation_stopped(Animation *animation, bool finished, void *data) {
    update_display_data();
 }
 
+#ifdef PBL_PLATFORM_BASALT
+
 static Animation *create_anim_scroll(int down) {
   //the combined animation for scrolling up all the fields
 
@@ -193,6 +195,28 @@ static Animation *create_anim_load() {
 
 }
 
+#elif PBL_PLATFORM_APLITE
+
+
+
+static Animation *create_anim_scroll(int down) {
+  GRect frame = layer_get_frame((Layer*) tide_event_text_layer);
+  Animation *scroll_out = (Animation*) property_animation_create_layer_frame((Layer*)tide_event_text_layer, &frame, &frame);
+  animation_set_handlers(scroll_out, (AnimationHandlers) {
+    .started = (AnimationStartedHandler) animation_started,
+    .stopped = (AnimationStoppedHandler) animation_stopped,
+  }, NULL);
+  return scroll_out;
+}
+
+static Animation *create_anim_load() {
+  GRect frame = layer_get_frame((Layer*) tide_event_text_layer);
+  return (Animation*) property_animation_create_layer_frame((Layer*)tide_event_text_layer, &frame, &frame);
+}
+
+#endif
+
+
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
 
@@ -234,7 +258,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   //find the minimum and maximum heights
   for(int i=0; i < n_events; i++)
   {
-      APP_LOG(APP_LOG_LEVEL_DEBUG, "time: %d, height : %d, event : %d", times.values[i], heights.values[i], events[i]);
+      //APP_LOG(APP_LOG_LEVEL_DEBUG, "time: %d, height : %d, event : %d", times.values[i], heights.values[i], events[i]);
       if(heights.values[i] < min_height) {
         min_height = heights.values[i];
       }
@@ -245,9 +269,16 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Min height: %d, max_height: %d", min_height, max_height);
 
-  has_data = 1;
-  animation_unschedule_all();
-  animation_schedule(create_anim_scroll(1));
+  if(n_events > 0){ //if some data points were received there is no error so display the data
+    has_data = 1;
+    animation_unschedule_all();
+    animation_schedule(create_anim_scroll(1));
+  }
+  else { //else use the name field to carry an error message
+      text_layer_set_text(tide_event_text_layer, "Error : (");
+      text_layer_set_text(at_text_layer, name);
+  }
+  
   layer_mark_dirty(window_get_root_layer(window));
 }
 
@@ -257,7 +288,7 @@ static void inbox_dropped_callback(AppMessageResult reason, void *context) {
 
 static void blue_layer_update_callback(Layer *layer, GContext *ctx) {
   GRect bounds = layer_get_bounds(layer);
-  graphics_context_set_fill_color(ctx, GColorPictonBlue);
+  graphics_context_set_fill_color(ctx, COLOR_FALLBACK(GColorPictonBlue,GColorClear));
   graphics_fill_rect(ctx, bounds, 0, GCornerNone);
 }
 
@@ -265,7 +296,9 @@ static void line_layer_update_callback(Layer *layer, GContext *ctx) {
   GRect bounds = layer_get_bounds(layer);
   if(has_data){
       graphics_context_set_stroke_color(ctx, GColorBlack);
+      #ifdef PBL_PLATFORM_BASALT
       graphics_context_set_stroke_width(ctx, 1);
+      #endif
       graphics_draw_line(ctx, GPoint(LEFT_MARGIN, 32), GPoint(SCREEN_WIDTH - 50, 32));
   }
 }
@@ -273,7 +306,8 @@ static void line_layer_update_callback(Layer *layer, GContext *ctx) {
 
 static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
-  window_set_background_color(window, GColorMediumSpringGreen);
+
+  window_set_background_color(window, COLOR_FALLBACK(GColorChromeYellow, GColorWhite));
   GRect bounds = layer_get_bounds(window_layer);
 
   //add the blue layer at the base
@@ -370,7 +404,6 @@ static void deinit(void) {
 
 int main(void) {
   init();
-
   timestring[0] = 'A';
   timestring[1] = 'T';
   timestring[2] = ' ';
