@@ -321,7 +321,7 @@ static void inbox_dropped_callback(AppMessageResult reason, void *context) {
 
 static void blue_layer_update_callback(Layer *layer, GContext *ctx) {
   GRect bounds = layer_get_bounds(layer);
-  graphics_context_set_fill_color(ctx, COLOR_FALLBACK(GColorPictonBlue,GColorClear));
+  graphics_context_set_fill_color(ctx, COLOR_FALLBACK(GColorBlueMoon,GColorClear));
   graphics_fill_rect(ctx, bounds, 0, GCornerNone);
 }
 
@@ -340,7 +340,7 @@ static void line_layer_update_callback(Layer *layer, GContext *ctx) {
 static void window_load(Window *window) {
   Layer *window_layer = window_get_root_layer(window);
 
-  window_set_background_color(window, COLOR_FALLBACK(GColorWhite, GColorWhite));
+  window_set_background_color(window, COLOR_FALLBACK(GColorPictonBlue, GColorWhite));
   GRect bounds = layer_get_bounds(window_layer);
 
   //add the blue layer at the base
@@ -363,7 +363,7 @@ static void window_load(Window *window) {
   tide_event_text_layer = text_layer_create(tide_event_text_layer_bounds);
   text_layer_set_text(tide_event_text_layer, "Getting Data");
   text_layer_set_font(tide_event_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
-    text_layer_set_background_color(tide_event_text_layer, GColorClear);
+  text_layer_set_background_color(tide_event_text_layer, GColorClear);
   layer_add_child(window_layer, text_layer_get_layer(tide_event_text_layer));
 
   //create the at text layer
@@ -376,6 +376,9 @@ static void window_load(Window *window) {
   height_text_layer = text_layer_create((GRect) { .origin = { bounds.size.w - 45, SCREEN_HEIGHT - level_height }, .size = { bounds.size.w - LEFT_MARGIN, 50 } });
   text_layer_set_font(height_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
   text_layer_set_background_color(height_text_layer, GColorClear);
+  #ifdef PBL_PLATFORM_BASALT
+  text_layer_set_text_color(height_text_layer, GColorWhite);
+  #endif
   layer_add_child(window_layer, text_layer_get_layer(height_text_layer));
 
   //create the counter text layer
