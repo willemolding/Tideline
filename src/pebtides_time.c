@@ -216,6 +216,38 @@ static Animation *create_anim_load() {
 
 #endif
 
+static void store_tide_data() {
+  APP_LOG(APP_LOG_LEVEL_DEBUG, "Storing tide data.");
+  persist_write_string(NAME, name);
+  persist_write_string(UNIT, unit);
+  persist_write_int(N_EVENTS, n_events);
+  persist_write_data(TIMES, times.bytes, sizeof(IntByteArray));
+  persist_write_data(HEIGHTS, heights.bytes, sizeof(IntByteArray));
+  persist_write_data(EVENTS, events, MAX_TIDE_EVENTS);
+}
+
+static bool load_tide_data() {
+  if(persist_exists(NAME)){ //assume that if the name exists then all data is there.
+    APP_LOG(APP_LOG_LEVEL_DEBUG, "Loading data from storage");
+    persist_read_string(NAME, name, MAX_NAME_LENGTH);
+    persist_read_string(UNIT, unit, 3);
+    n_events = persist_read_int(N_EVENTS);
+    persist_read_data(TIMES, times.bytes, sizeof(IntByteArray));
+    persist_read_data(HEIGHTS, heights.bytes, sizeof(IntByteArray));
+    persist_read_data(EVENTS, events, MAX_TIDE_EVENTS);
+
+    for(int i=0; i < n_events; i++) //find the maximum and minimum heights.
+    {
+        if(heights.values[i] < min_height) {
+          min_height = heights.values[i];
+        }
+        if(heights.values[i] > max_height) {
+          max_height = heights.values[i];
+        }
+    }
+  }
+  return persist_exists(NAME);
+}
 
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
@@ -397,10 +429,20 @@ static void init(void) {
   //open app message
   app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
 
+  // displays cached data before waiting for more. This makes data still available without phone connection.
+  if(load_tide_data()) {
+    has_data = 1;
+    data_index = 0;
+    animation_unschedule_all();
+    animation_schedule(create_anim_scroll(1));
+    layer_mark_dirty(window_get_root_layer(window));
+  }
+
 }
 
 static void deinit(void) {
   window_destroy(window);
+  store_tide_data();
 }
 
 int main(void) {
