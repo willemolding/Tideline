@@ -77,12 +77,17 @@ static void update_display_data() {
     }
     text_layer_set_text(at_text_layer, timestring);
 
-    int x = abs(heights.values[data_index]);
-    int d1 = x/100;
-    int d2 = x/10 - 10*d1;
-    int d3 = x - 10*d2 - 100*d1;
+    int x = heights.values[data_index];
+    int d1 = abs(x/100);
+    int d2 = abs(x) - d1*100;
 
-    snprintf(height_text,10,"%d.%d%d%s",d1,d2,d3, unit);    
+    //make sure the sign is right even for d1=0
+    if(x>=0)
+      snprintf(height_text,10,"%d.%d%s",d1,d2, unit);  
+    else
+      snprintf(height_text,10,"-%d.%d%s",d1,d2, unit);  
+
+
     text_layer_set_text(height_text_layer, height_text);
 
     snprintf(counter_text,6,"%d/%d",data_index + 1, n_events);    
