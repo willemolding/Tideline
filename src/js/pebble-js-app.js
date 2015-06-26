@@ -1,4 +1,6 @@
-var site_url = "http://pebtides-time.herokuapp.com/";
+//var site_url = "http://pebtides-time.herokuapp.com/";
+var site_url = "http://pebtides-time-dev.herokuapp.com/";
+
 var lat = 0;
 var lon = 0;
 var token = 'not_set';
@@ -137,8 +139,7 @@ function get_data_for_user(){
 Pebble.addEventListener("ready",
   
     function(e) {
-        console.log("Hello world! - Sent from your javascript application.");
-
+      
         //determine the current watch info. This is a hack until pebble fixes the bug.
         if(Pebble.getActiveWatchInfo) {
           try {
