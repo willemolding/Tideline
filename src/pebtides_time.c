@@ -54,7 +54,7 @@ static char timestring[20];
 static char counter_text[6];
 static char height_text[10];
 
-static char error_message[20];
+static char error_message[50];
 
 static int data_index = 0;
 static int has_data = 0;
@@ -168,6 +168,7 @@ static Animation *create_anim_scroll(int down) {
 
   //also shift the height to the correct level
   level_height = ((heights.values[data_index] - min_height)*(MAX_LEVEL - MIN_LEVEL))/(max_height-min_height) + MIN_LEVEL;
+
   GRect from_frame = layer_get_frame((Layer*) height_text_layer);
   GRect to_frame = GRect(from_frame.origin.x, SCREEN_HEIGHT - level_height, from_frame.size.w, from_frame.size.h);
   PropertyAnimation *shift_height_animation = property_animation_create_layer_frame((Layer*) height_text_layer, &from_frame, &to_frame);
@@ -182,7 +183,6 @@ static Animation *create_anim_scroll(int down) {
   animation_set_duration((Animation*) shift_blue_animation, 1000);
 
   return animation_spawn_create(scroll_in_and_out, (Animation*) shift_height_animation, (Animation*) shift_blue_animation, NULL);
-  //return (Animation*) shift_height_animation;
 }
 
 static Animation *create_anim_load() {
@@ -203,7 +203,6 @@ static Animation *create_anim_load() {
 }
 
 #elif PBL_PLATFORM_APLITE
-
 
 
 static Animation *create_anim_scroll(int down) {
@@ -297,7 +296,6 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     tuple = dict_read_next(iterator);
   }
 
-
   if(is_error == false) {
     //find the minimum and maximum heights
     for(int i=0; i < n_events; i++)
@@ -314,6 +312,8 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     data_index = 0;
     animation_unschedule_all();
     animation_schedule(create_anim_scroll(1));
+    layer_mark_dirty(window_get_root_layer(window));
+
   }
   else { // push an error message window to the stack
       Window *error_window = window_create();
@@ -330,8 +330,9 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 
       window_stack_push(error_window, true);
   }
+
+
   
-  layer_mark_dirty(window_get_root_layer(window));
 }
 
 static void inbox_dropped_callback(AppMessageResult reason, void *context) {
@@ -367,6 +368,7 @@ static void window_load(Window *window) {
   layer_set_update_proc(blue_layer, blue_layer_update_callback);
   layer_add_child(window_layer, blue_layer);
 
+  //add the line layer
   line_layer = layer_create(bounds);
   layer_set_update_proc(line_layer, line_layer_update_callback);
   layer_add_child(window_layer, line_layer);
@@ -411,8 +413,10 @@ static void window_load(Window *window) {
 
 }
 
+static void window_appear(Window *window) {
+}
+
 static void window_unload(Window *window) {
-  text_layer_destroy(name_text_layer);
 }
 
 static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
@@ -440,6 +444,7 @@ static void init(void) {
   window_set_click_config_provider(window, click_config_provider);
   window_set_window_handlers(window, (WindowHandlers) {
     .load = window_load,
+    .appear = window_appear,
     .unload = window_unload,
   });
   const bool animated = true;
