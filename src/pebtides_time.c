@@ -54,6 +54,8 @@ static char timestring[20];
 static char counter_text[6];
 static char height_text[10];
 
+static char error_message[20];
+
 static int data_index = 0;
 static int has_data = 0;
 static int level_height = SCREEN_HEIGHT/2; // how many pixels above the bottom to draw the blue layer
@@ -87,7 +89,6 @@ static void update_display_data() {
       snprintf(height_text,10,"%d.%d%s",d1,d2, unit);  
     else
       snprintf(height_text,10,"-%d.%d%s",d1,d2, unit);  
-
 
     text_layer_set_text(height_text_layer, height_text);
 
@@ -262,6 +263,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   APP_LOG(APP_LOG_LEVEL_DEBUG, "Message was received");
 
   Tuple *tuple = dict_read_first(iterator);
+  bool is_error = false;
 
   //read in the data from the message using the dictionary iterator
   while (tuple) 
@@ -286,36 +288,47 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
       case EVENTS:
         memcpy(events, tuple->value->data, MAX_TIDE_EVENTS);
         break;
+      case ERROR_MSG:
+        strcpy(error_message,tuple->value->cstring);
+        is_error = true;
+        break;
     }
 
     tuple = dict_read_next(iterator);
   }
 
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Name: %s, n_events : %d, unit : %s", name, n_events, unit);
 
-  //find the minimum and maximum heights
-  for(int i=0; i < n_events; i++)
-  {
-      //APP_LOG(APP_LOG_LEVEL_DEBUG, "time: %d, height : %d, event : %d", times.values[i], heights.values[i], events[i]);
-      if(heights.values[i] < min_height) {
-        min_height = heights.values[i];
-      }
-      if(heights.values[i] > max_height) {
-        max_height = heights.values[i];
-      }
-  }
+  if(is_error == false) {
+    //find the minimum and maximum heights
+    for(int i=0; i < n_events; i++)
+    {
+        if(heights.values[i] < min_height) {
+          min_height = heights.values[i];
+        }
+        if(heights.values[i] > max_height) {
+          max_height = heights.values[i];
+        }
+    }
 
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Min height: %d, max_height: %d", min_height, max_height);
-
-  if(n_events > 0){ //if some data points were received there is no error so display the data
     has_data = 1;
     data_index = 0;
     animation_unschedule_all();
     animation_schedule(create_anim_scroll(1));
   }
-  else { //else use the name field to carry an error message
-      text_layer_set_text(tide_event_text_layer, "Error : (");
-      text_layer_set_text(at_text_layer, name);
+  else { // push an error message window to the stack
+      Window *error_window = window_create();
+      window_set_background_color(error_window, COLOR_FALLBACK(GColorOrange,GColorWhite));
+      Layer *error_window_layer = window_get_root_layer(error_window);
+      GRect bounds = layer_get_bounds(error_window_layer);
+
+      TextLayer *error_text_layer = text_layer_create(bounds);
+
+      text_layer_set_text(error_text_layer, error_message);
+      text_layer_set_font(error_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
+      text_layer_set_background_color(error_text_layer, GColorClear);
+      layer_add_child(error_window_layer, text_layer_get_layer(error_text_layer));
+
+      window_stack_push(error_window, true);
   }
   
   layer_mark_dirty(window_get_root_layer(window));
