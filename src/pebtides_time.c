@@ -330,9 +330,6 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
 
       window_stack_push(error_window, true);
   }
-
-
-  
 }
 
 static void inbox_dropped_callback(AppMessageResult reason, void *context) {

@@ -1,5 +1,5 @@
-//var site_url = "http://pebtides-time.herokuapp.com/";
-var site_url = "http://pebtides-time-dev.herokuapp.com/";
+var site_url = "http://pebtides-time.herokuapp.com/";
+//var site_url = "http://pebtides-time-dev.herokuapp.com/";
 
 var lat = 0;
 var lon = 0;
