@@ -16,7 +16,8 @@
     "N_EVENTS": 2,
     "TIMES": 3,
     "HEIGHTS" : 4,
-    "EVENTS" : 5
+    "EVENTS" : 5,
+    "ERROR_MSG" : 6
   },
   "resources": {
     "media": [

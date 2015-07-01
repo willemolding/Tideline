@@ -84,12 +84,7 @@ function send_data_to_pebble(response){
 }
 
 function send_error_message_to_pebble(error_string){
-    var message = { 'NAME' : error_string,
-                    'UNIT' : '',
-                    'N_EVENTS' : 0,
-                    'TIMES' : [],
-                    'HEIGHTS' : [],
-                    'EVENTS' : []};
+    var message = { 'ERROR_MSG' : error_string};
 
     console.log('pebble message is:');
     console.log(JSON.stringify(message));

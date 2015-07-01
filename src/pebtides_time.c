@@ -17,7 +17,8 @@ enum {
     N_EVENTS,
     TIMES,
     HEIGHTS,
-    EVENTS
+    EVENTS,
+    ERROR_MSG
   };
 
 typedef union IntByteArray
