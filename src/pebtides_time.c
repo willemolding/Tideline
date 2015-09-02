@@ -75,8 +75,13 @@ static void update_display_data() {
 
 }
 
+/**
+Function to be called when scroll animations end. This is passed as a parameter to the create_scroll_anim function
+This makes the transitions much more visually pleasing than changing the data before the animation
+*/
 void animation_stopped(Animation *animation, bool finished, void *data) {
    update_display_data();
+   layer_mark_dirty(window_get_root_layer(window));
 }
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
@@ -128,7 +133,6 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     data_index = 0;
     animation_unschedule_all();
     animation_schedule(create_anim_scroll(1, animation_stopped));
-    layer_mark_dirty(window_get_root_layer(window));
 
   }
   else { // push an error message window to the stack
@@ -226,17 +230,11 @@ static void window_load(Window *window) {
 
 }
 
-static void window_appear(Window *window) {
-}
-
-static void window_unload(Window *window) {
-}
 
 static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
   if(data_index > 0 && has_data) {
     data_index -= 1;
     animation_schedule(create_anim_scroll(0, animation_stopped));
-    layer_mark_dirty(window_get_root_layer(window));
   }
 }
 
@@ -244,7 +242,6 @@ static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
   if(data_index < (tide_data.n_events - 1) && has_data) {
     data_index += 1;
     animation_schedule(create_anim_scroll(1, animation_stopped));
-    layer_mark_dirty(window_get_root_layer(window));
   }
 }
 
@@ -254,15 +251,12 @@ static void click_config_provider() {
 }
 
 
-
 static void init(void) {
 
   window = window_create();
   window_set_click_config_provider(window, click_config_provider);
   window_set_window_handlers(window, (WindowHandlers) {
     .load = window_load,
-    .appear = window_appear,
-    .unload = window_unload,
   });
   const bool animated = true;
 
@@ -278,7 +272,6 @@ static void init(void) {
     data_index = 0;
     animation_unschedule_all();
     animation_schedule(create_anim_scroll(1, animation_stopped));
-    layer_mark_dirty(window_get_root_layer(window));
   }
 
 }
