@@ -5,28 +5,25 @@
 #define SCREEN_WIDTH 144
 #define SCREEN_HEIGHT 168
 
-#define MIN_LEVEL 30
-#define MAX_LEVEL 130
-
 #define LEFT_MARGIN 5
 
 
 // the text layers to display the info
 static Window *window;
 
-static Layer *blue_layer;
-static Layer *line_layer;
+Layer *blue_layer;
+Layer *line_layer;
 
-static TextLayer *name_text_layer;
-static TextLayer *tide_event_text_layer;
-static TextLayer *at_text_layer;
-static TextLayer *height_text_layer;
-static TextLayer *counter_text_layer;
+TextLayer *name_text_layer;
+TextLayer *tide_event_text_layer;
+TextLayer *at_text_layer;
+TextLayer *height_text_layer;
+TextLayer *counter_text_layer;
 
 #define tide_event_text_layer_bounds (GRect) { .origin = { LEFT_MARGIN, 40 }, .size = { SCREEN_WIDTH - LEFT_MARGIN, 50 } }
 #define at_text_layer_bounds (GRect) { .origin = { LEFT_MARGIN, 80 }, .size = { SCREEN_WIDTH - LEFT_MARGIN, 53 } }
 
-static TideData tide_data;
+TideData tide_data;
 
 static char timestring[20];
 static char counter_text[6];
@@ -34,11 +31,11 @@ static char height_text[10];
 
 static char error_message[50];
 
-static int data_index = 0;
-static int has_data = 0;
-static int level_height = SCREEN_HEIGHT / 2; // how many pixels above the bottom to draw the blue layer
-static int min_height = 10000;
-static int max_height = 0;
+int data_index = 0;
+int has_data = 0;
+int level_height = SCREEN_HEIGHT / 2; // how many pixels above the bottom to draw the blue layer
+int min_height = 10000;
+int max_height = 0;
 
 static void update_display_data() {
     text_layer_set_text(name_text_layer, tide_data.name);
@@ -76,6 +73,10 @@ static void update_display_data() {
     snprintf(counter_text,6,"%d/%d",data_index + 1, tide_data.n_events);    
     text_layer_set_text(counter_text_layer,counter_text);
 
+}
+
+void animation_stopped(Animation *animation, bool finished, void *data) {
+   update_display_data();
 }
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
@@ -126,7 +127,7 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     has_data = 1;
     data_index = 0;
     animation_unschedule_all();
-    animation_schedule(create_anim_scroll(1));
+    animation_schedule(create_anim_scroll(1, animation_stopped));
     layer_mark_dirty(window_get_root_layer(window));
 
   }
@@ -234,14 +235,16 @@ static void window_unload(Window *window) {
 static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
   if(data_index > 0 && has_data) {
     data_index -= 1;
-    animation_schedule(create_anim_scroll(0));
+    animation_schedule(create_anim_scroll(0, animation_stopped));
+    layer_mark_dirty(window_get_root_layer(window));
   }
 }
 
 static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
   if(data_index < (tide_data.n_events - 1) && has_data) {
     data_index += 1;
-    animation_schedule(create_anim_scroll(1));
+    animation_schedule(create_anim_scroll(1, animation_stopped));
+    layer_mark_dirty(window_get_root_layer(window));
   }
 }
 
@@ -274,7 +277,7 @@ static void init(void) {
     has_data = 1;
     data_index = 0;
     animation_unschedule_all();
-    animation_schedule(create_anim_scroll(1));
+    animation_schedule(create_anim_scroll(1, animation_stopped));
     layer_mark_dirty(window_get_root_layer(window));
   }
 

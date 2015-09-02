@@ -2,7 +2,7 @@
 #include "app_animations.h"
 #include <pebble.h>
 
-static Animation *create_anim_scroll_out(Layer *layer, int up) {
+Animation *create_anim_scroll_out(Layer *layer, int up) {
   //creates an animation that shrinks a layer into either its top or bottom edge
   // Set start and end
   GRect from_frame = layer_get_frame(layer);
@@ -18,7 +18,7 @@ static Animation *create_anim_scroll_out(Layer *layer, int up) {
   return (Animation*) property_animation_create_layer_frame(layer, &from_frame, &to_frame);
 }
 
-static Animation *create_anim_scoll_in(Layer *layer, GRect dest, int up) {
+Animation *create_anim_scoll_in(Layer *layer, GRect dest, int up) {
   GRect from_frame;
   GRect to_frame = dest;
 
@@ -31,18 +31,9 @@ static Animation *create_anim_scoll_in(Layer *layer, GRect dest, int up) {
   return (Animation*) property_animation_create_layer_frame(layer, &from_frame, &to_frame);
 }
 
-void animation_started(Animation *animation, void *data) {
-  // Animation started!
-
-}
-
-void animation_stopped(Animation *animation, bool finished, void *data) {
-   update_display_data();
-}
-
 #ifdef PBL_PLATFORM_BASALT
 
-static Animation *create_anim_scroll(int down) {
+Animation *create_anim_scroll(int down, void (*animation_stopped)(Animation *animation, bool finished, void *data)) {
   //the combined animation for scrolling up all the fields
 
   //first create all the scroll out animations and combine to a spawn animation
@@ -56,7 +47,6 @@ static Animation *create_anim_scroll(int down) {
   // add a callback to swap the data at the end of the scoll out animation
   // You may set handlers to listen for the start and stop events
   animation_set_handlers(scroll_out, (AnimationHandlers) {
-    .started = (AnimationStartedHandler) animation_started,
     .stopped = (AnimationStoppedHandler) animation_stopped,
   }, NULL);
 
@@ -90,7 +80,7 @@ static Animation *create_anim_scroll(int down) {
   return animation_spawn_create(scroll_in_and_out, (Animation*) shift_height_animation, (Animation*) shift_blue_animation, NULL);
 }
 
-static Animation *create_anim_load() {
+Animation *create_anim_load() {
   //the loading animation for the blue_layer
   GRect from_frame = layer_get_frame((Layer*) blue_layer);
   GRect to_frame = GRect(from_frame.origin.x, from_frame.origin.y + 20, from_frame.size.w, from_frame.size.h);
@@ -110,17 +100,16 @@ static Animation *create_anim_load() {
 #elif PBL_PLATFORM_APLITE
 
 
-static Animation *create_anim_scroll(int down) {
+Animation *create_anim_scroll(int down, void (*animation_stopped)(Animation *animation, bool finished, void *data)) {
   GRect frame = layer_get_frame((Layer*) tide_event_text_layer);
   Animation *scroll_out = (Animation*) property_animation_create_layer_frame((Layer*)tide_event_text_layer, &frame, &frame);
   animation_set_handlers(scroll_out, (AnimationHandlers) {
-    .started = (AnimationStartedHandler) animation_started,
     .stopped = (AnimationStoppedHandler) animation_stopped,
   }, NULL);
   return scroll_out;
 }
 
-static Animation *create_anim_load() {
+Animation *create_anim_load() {
   GRect frame = layer_get_frame((Layer*) tide_event_text_layer);
   return (Animation*) property_animation_create_layer_frame((Layer*)tide_event_text_layer, &frame, &frame);
 }
