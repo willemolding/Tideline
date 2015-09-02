@@ -2,40 +2,34 @@
 #include "tide_data.h"
 #include "app_animations.h"
 
-#define SCREEN_WIDTH 144
-#define SCREEN_HEIGHT 168
-
-#define LEFT_MARGIN 5
-
-
 // the text layers to display the info
 static Window *window;
 
+// layers for the load screen animation
 Layer *blue_layer;
 Layer *line_layer;
 
+// text layers to display the data
 TextLayer *name_text_layer;
 TextLayer *tide_event_text_layer;
 TextLayer *at_text_layer;
 TextLayer *height_text_layer;
 TextLayer *counter_text_layer;
 
-#define tide_event_text_layer_bounds (GRect) { .origin = { LEFT_MARGIN, 40 }, .size = { SCREEN_WIDTH - LEFT_MARGIN, 50 } }
-#define at_text_layer_bounds (GRect) { .origin = { LEFT_MARGIN, 80 }, .size = { SCREEN_WIDTH - LEFT_MARGIN, 53 } }
-
 TideData tide_data;
 
+// string buffers
 static char timestring[20];
 static char counter_text[6];
 static char height_text[10];
-
 static char error_message[50];
 
-int data_index = 0;
-int has_data = 0;
+// other random global vars
 int level_height = SCREEN_HEIGHT / 2; // how many pixels above the bottom to draw the blue layer
 int min_height = 10000;
 int max_height = 0;
+int data_index = 0;
+int has_data = 0;
 
 static void update_display_data() {
     text_layer_set_text(name_text_layer, tide_data.name);
