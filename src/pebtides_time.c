@@ -1,31 +1,14 @@
 #include <pebble.h>
+#include "tide_data.h"
 
 #define SCREEN_WIDTH 144
 #define SCREEN_HEIGHT 168
-
-#define MAX_TIDE_EVENTS 20
-#define MAX_NAME_LENGTH 48
 
 #define MIN_LEVEL 30
 #define MAX_LEVEL 130
 
 #define LEFT_MARGIN 5
 
-enum {
-    NAME,
-    UNIT,
-    N_EVENTS,
-    TIMES,
-    HEIGHTS,
-    EVENTS,
-    ERROR_MSG
-  };
-
-typedef union IntByteArray
-{
-  int values[MAX_TIDE_EVENTS];
-  char bytes[MAX_TIDE_EVENTS*4];
-} IntByteArray;
 
 // the text layers to display the info
 static Window *window;
@@ -42,13 +25,7 @@ static TextLayer *counter_text_layer;
 #define tide_event_text_layer_bounds (GRect) { .origin = { LEFT_MARGIN, 40 }, .size = { SCREEN_WIDTH - LEFT_MARGIN, 50 } }
 #define at_text_layer_bounds (GRect) { .origin = { LEFT_MARGIN, 80 }, .size = { SCREEN_WIDTH - LEFT_MARGIN, 53 } }
 
-
-static IntByteArray times;
-static IntByteArray heights;
-static char events[MAX_TIDE_EVENTS];
-static char name[MAX_NAME_LENGTH];
-static char unit[3];
-static int n_events = 0;
+static TideData tide_data;
 
 static char timestring[20];
 static char counter_text[6];
@@ -58,20 +35,21 @@ static char error_message[50];
 
 static int data_index = 0;
 static int has_data = 0;
-static int level_height = SCREEN_HEIGHT/2; // how many pixels above the bottom to draw the blue layer
+static int level_height = SCREEN_HEIGHT / 2; // how many pixels above the bottom to draw the blue layer
 static int min_height = 10000;
 static int max_height = 0;
 
 static void update_display_data() {
-    text_layer_set_text(name_text_layer, name);
-    if(events[data_index] == 1) {
+    text_layer_set_text(name_text_layer, tide_data.name);
+
+    if(tide_data.events[data_index] == 1) {
           text_layer_set_text(tide_event_text_layer, "HIGH TIDE");
     }
     else {
           text_layer_set_text(tide_event_text_layer, "LOW TIDE");
     }
 
-    time_t t = times.values[data_index];
+    time_t t = tide_data.times.values[data_index];
     if(clock_is_24h_style()) {
       strftime(timestring + 3, 20, "%H:%M\n%B %d", localtime(&t));
     }
@@ -80,19 +58,19 @@ static void update_display_data() {
     }
     text_layer_set_text(at_text_layer, timestring);
 
-    int x = heights.values[data_index];
+    int x = tide_data.heights.values[data_index];
     int d1 = abs(x/100);
     int d2 = abs(x) - d1*100;
 
     //make sure the sign is right even for d1=0
     if(x>=0)
-      snprintf(height_text,10,"%d.%d%s",d1,d2, unit);  
+      snprintf(height_text,10,"%d.%d%s",d1,d2, tide_data.unit);  
     else
-      snprintf(height_text,10,"-%d.%d%s",d1,d2, unit);  
+      snprintf(height_text,10,"-%d.%d%s",d1,d2, tide_data.unit);  
 
     text_layer_set_text(height_text_layer, height_text);
 
-    snprintf(counter_text,6,"%d/%d",data_index + 1, n_events);    
+    snprintf(counter_text,6,"%d/%d",data_index + 1, tide_data.n_events);    
     text_layer_set_text(counter_text_layer,counter_text);
 
 }
@@ -167,7 +145,7 @@ static Animation *create_anim_scroll(int down) {
   Animation *scroll_in_and_out = animation_sequence_create(scroll_out, scroll_in, NULL);
 
   //also shift the height to the correct level
-  level_height = ((heights.values[data_index] - min_height)*(MAX_LEVEL - MIN_LEVEL))/(max_height-min_height) + MIN_LEVEL;
+  level_height = ((tide_data.heights.values[data_index] - min_height)*(MAX_LEVEL - MIN_LEVEL))/(max_height-min_height) + MIN_LEVEL;
 
   GRect from_frame = layer_get_frame((Layer*) height_text_layer);
   GRect to_frame = GRect(from_frame.origin.x, SCREEN_HEIGHT - level_height, from_frame.size.w, from_frame.size.h);
@@ -222,40 +200,6 @@ static Animation *create_anim_load() {
 
 #endif
 
-static void store_tide_data() {
-  APP_LOG(APP_LOG_LEVEL_DEBUG, "Storing tide data.");
-  persist_write_string(NAME, name);
-  persist_write_string(UNIT, unit);
-  persist_write_int(N_EVENTS, n_events);
-  persist_write_data(TIMES, times.bytes, sizeof(IntByteArray));
-  persist_write_data(HEIGHTS, heights.bytes, sizeof(IntByteArray));
-  persist_write_data(EVENTS, events, MAX_TIDE_EVENTS);
-}
-
-static bool load_tide_data() {
-  if(persist_exists(NAME)){ //assume that if the name exists then all data is there.
-    APP_LOG(APP_LOG_LEVEL_DEBUG, "Loading data from storage");
-    persist_read_string(NAME, name, MAX_NAME_LENGTH);
-    persist_read_string(UNIT, unit, 3);
-    n_events = persist_read_int(N_EVENTS);
-    persist_read_data(TIMES, times.bytes, sizeof(IntByteArray));
-    persist_read_data(HEIGHTS, heights.bytes, sizeof(IntByteArray));
-    persist_read_data(EVENTS, events, MAX_TIDE_EVENTS);
-
-    for(int i=0; i < n_events; i++) //find the maximum and minimum heights.
-    {
-        if(heights.values[i] < min_height) {
-          min_height = heights.values[i];
-        }
-        if(heights.values[i] > max_height) {
-          max_height = heights.values[i];
-        }
-    }
-  }
-  return persist_exists(NAME);
-}
-
-
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
 
    // incoming message received
@@ -270,22 +214,22 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
     switch (tuple->key) 
     {
       case NAME:
-        strcpy(name,tuple->value->cstring);
+        strcpy(tide_data.name,tuple->value->cstring);
         break;
       case UNIT:
-        strcpy(unit,tuple->value->cstring);
+        strcpy(tide_data.unit,tuple->value->cstring);
         break;
       case N_EVENTS:
-        n_events = tuple->value->int32;
+        tide_data.n_events = tuple->value->int32;
         break;
       case TIMES:
-        memcpy(times.bytes, tuple->value->data, sizeof(IntByteArray));
+        memcpy(tide_data.times.bytes, tuple->value->data, sizeof(IntByteArray));
         break;
       case HEIGHTS:
-        memcpy(heights.bytes, tuple->value->data, sizeof(IntByteArray));
+        memcpy(tide_data.heights.bytes, tuple->value->data, sizeof(IntByteArray));
         break;
       case EVENTS:
-        memcpy(events, tuple->value->data, MAX_TIDE_EVENTS);
+        memcpy(tide_data.events, tuple->value->data, MAX_TIDE_EVENTS);
         break;
       case ERROR_MSG:
         strcpy(error_message,tuple->value->cstring);
@@ -297,16 +241,9 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   }
 
   if(is_error == false) {
-    //find the minimum and maximum heights
-    for(int i=0; i < n_events; i++)
-    {
-        if(heights.values[i] < min_height) {
-          min_height = heights.values[i];
-        }
-        if(heights.values[i] > max_height) {
-          max_height = heights.values[i];
-        }
-    }
+
+  	min_height = find_min(tide_data.heights.values, tide_data.n_events);
+  	max_height = find_max(tide_data.heights.values, tide_data.n_events);    
 
     has_data = 1;
     data_index = 0;
@@ -424,7 +361,7 @@ static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
 }
 
 static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
-  if(data_index < (n_events - 1) && has_data) {
+  if(data_index < (tide_data.n_events - 1) && has_data) {
     data_index += 1;
     animation_schedule(create_anim_scroll(1));
   }
@@ -434,6 +371,8 @@ static void click_config_provider() {
   window_single_click_subscribe(BUTTON_ID_UP, up_click_handler);
   window_single_click_subscribe(BUTTON_ID_DOWN, down_click_handler);
 }
+
+
 
 static void init(void) {
 
@@ -450,11 +389,10 @@ static void init(void) {
 
   app_message_register_inbox_received(inbox_received_callback);
   app_message_register_inbox_dropped(inbox_dropped_callback);
-  //open app message
   app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
 
   // displays cached data before waiting for more. This makes data still available without phone connection.
-  if(load_tide_data()) {
+  if(load_tide_data(&tide_data)) {
     has_data = 1;
     data_index = 0;
     animation_unschedule_all();
@@ -466,7 +404,9 @@ static void init(void) {
 
 static void deinit(void) {
   window_destroy(window);
-  store_tide_data();
+  if(has_data == 1){
+  	store_tide_data(&tide_data);
+  }
 }
 
 int main(void) {
