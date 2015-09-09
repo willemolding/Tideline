@@ -7,3 +7,5 @@ This app was selected as a winner of the Pebble Timeline challenge! You can [rea
 This currently builds under version 3.3 of the pebble SDK. 
 
 Any questions please contact tideline.watchapp@gmail.com
+
+![alt text](https://assets.getpebble.com/api/file/ElNX37g9RZCzo8hHrBoh/convert?cache=true&fit=crop&w=720&h=320 "Banner")
