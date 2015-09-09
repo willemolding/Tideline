@@ -244,6 +244,16 @@ static void click_config_provider() {
   window_single_click_subscribe(BUTTON_ID_DOWN, down_click_handler);
 }
 
+static void destroy_layers(){
+  layer_destroy(blue_layer);
+  layer_destroy(line_layer);
+  text_layer_destroy(name_text_layer);
+  text_layer_destroy(tide_event_text_layer);
+  text_layer_destroy(at_text_layer);
+  text_layer_destroy(height_text_layer);
+  text_layer_destroy(counter_text_layer);
+}
+
 
 static void init(void) {
 
@@ -272,6 +282,7 @@ static void init(void) {
 
 static void deinit(void) {
   window_destroy(window);
+  destroy_layers();
   if(has_data == 1){
   	store_tide_data(&tide_data);
   }
