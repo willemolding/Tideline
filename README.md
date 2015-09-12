@@ -4,7 +4,7 @@ Tideline is an app for the Pebble smartwatch that adds tide information to the P
 
 This app was selected as a winner of the Pebble Timeline challenge! You can [read about it here.](http://developer.getpebble.com/blog/2015/07/02/timeline-challenge-week-nine/) I would love to see some ideas for a better user interface so fork away people. 
 
-This currently builds under version 3.3 of the pebble SDK. 
+This currently builds under version 3.4 of the pebble SDK. 
 
 Any questions please contact tideline.watchapp@gmail.com
 
