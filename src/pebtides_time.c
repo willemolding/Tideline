@@ -42,7 +42,7 @@ static void update_display_data() {
 
     text_layer_set_text(at_text_layer, timestring);
 
-    int current_height = get_tide_at_time(&tide_data, t);
+    current_height = get_tide_at_time(&tide_data, t);
     int d1 = abs(current_height/100);
     int d2 = abs(current_height) - d1*100;
 
@@ -145,8 +145,11 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   	max_height = find_max(tide_data.heights.values, tide_data.n_events);    
 
     has_data = 1;
+    store_tide_data(&tide_data);
+
+    update_display_data();
     animation_unschedule_all();
-    animation_schedule(create_anim_scroll(1, animation_stopped));
+    animation_schedule(create_anim_water_level());
 
   }
   else { // push an error message window to the stack
@@ -171,7 +174,7 @@ static void line_layer_update_callback(Layer *layer, GContext *ctx) {
       #ifdef PBL_PLATFORM_BASALT
       graphics_context_set_stroke_width(ctx, 1);
       #endif
-      graphics_draw_line(ctx, GPoint(LEFT_MARGIN + 5, 38), GPoint(SCREEN_WIDTH - LEFT_MARGIN - 5, 38));
+      graphics_draw_line(ctx, GPoint(LEFT_MARGIN + 5, 35), GPoint(SCREEN_WIDTH - LEFT_MARGIN - 5, 35));
   }
 }
 
@@ -202,7 +205,7 @@ static void window_load(Window *window) {
 
   //create the event text layer
   tide_event_text_layer = text_layer_create(tide_event_text_layer_bounds);
-  text_layer_set_text(tide_event_text_layer, "Getting Data");
+  text_layer_set_text(tide_event_text_layer, "Loading");
   #ifdef PBL_PLATFORM_APLITE
   text_layer_set_font(tide_event_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
   #else
@@ -250,8 +253,6 @@ static void init(void) {
   // displays cached data before waiting for more. This makes data still available without phone connection.
   if(load_tide_data(&tide_data)) {
     has_data = 1;
-    animation_unschedule_all();
-    animation_schedule(create_anim_scroll(1, animation_stopped));
   }
 
 }
@@ -259,9 +260,6 @@ static void init(void) {
 static void deinit(void) {
   window_destroy(window);
   destroy_layers();
-  if(has_data == 1){
-  	store_tide_data(&tide_data);
-  }
 }
 
 int main(void) {

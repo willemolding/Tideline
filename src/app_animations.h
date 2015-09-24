@@ -28,15 +28,6 @@ extern int level_height; // how many pixels above the bottom to draw the blue la
 extern int min_height;
 extern int max_height;
 
-
-Animation *create_anim_scroll_out(Layer *layer, int up);
-
-Animation *create_anim_scoll_in(Layer *layer, GRect dest, int up);
-
-void animation_started(Animation *animation, void *data);
-
-void animation_stopped(Animation *animation, bool finished, void *data);
-
-Animation *create_anim_scroll(int down, void (*animation_stopped)(Animation *animation, bool finished, void *data));
-
 Animation *create_anim_load();
+
+Animation *create_anim_water_level();
