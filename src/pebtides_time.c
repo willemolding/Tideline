@@ -14,7 +14,6 @@ TextLayer *name_text_layer;
 TextLayer *tide_event_text_layer;
 TextLayer *at_text_layer;
 TextLayer *height_text_layer;
-TextLayer *counter_text_layer;
 
 TideData tide_data;
 
@@ -63,9 +62,6 @@ static void update_display_data() {
       snprintf(height_text,10,"-%d.%d%s",d1,d2, tide_data.unit);  
 
     text_layer_set_text(height_text_layer, height_text);
-
-    snprintf(counter_text,6,"%d/%d",data_index + 1, tide_data.n_events);    
-    text_layer_set_text(counter_text_layer,counter_text);
 
 }
 
@@ -213,36 +209,12 @@ static void window_load(Window *window) {
   #endif
   layer_add_child(window_layer, text_layer_get_layer(height_text_layer));
 
-  //create the counter text layer
-  counter_text_layer = text_layer_create((GRect) { .origin = { bounds.size.w - 35, 0}, .size = { bounds.size.w , 30 } });
-  text_layer_set_font(counter_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18));
-  text_layer_set_background_color(counter_text_layer, GColorClear);
-  layer_add_child(window_layer, text_layer_get_layer(counter_text_layer));
-
   //start the loading animation
   animation_schedule(create_anim_load());
 
 }
 
 
-static void up_click_handler(ClickRecognizerRef recognizer, void *context) {
-  if(data_index > 0 && has_data) {
-    data_index -= 1;
-    animation_schedule(create_anim_scroll(0, animation_stopped));
-  }
-}
-
-static void down_click_handler(ClickRecognizerRef recognizer, void *context) {
-  if(data_index < (tide_data.n_events - 1) && has_data) {
-    data_index += 1;
-    animation_schedule(create_anim_scroll(1, animation_stopped));
-  }
-}
-
-static void click_config_provider() {
-  window_single_click_subscribe(BUTTON_ID_UP, up_click_handler);
-  window_single_click_subscribe(BUTTON_ID_DOWN, down_click_handler);
-}
 
 static void destroy_layers(){
   layer_destroy(blue_layer);
@@ -251,14 +223,12 @@ static void destroy_layers(){
   text_layer_destroy(tide_event_text_layer);
   text_layer_destroy(at_text_layer);
   text_layer_destroy(height_text_layer);
-  text_layer_destroy(counter_text_layer);
 }
 
 
 static void init(void) {
 
   window = window_create();
-  window_set_click_config_provider(window, click_config_provider);
   window_set_window_handlers(window, (WindowHandlers) {
     .load = window_load,
   });
