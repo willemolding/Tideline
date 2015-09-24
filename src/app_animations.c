@@ -64,12 +64,6 @@ Animation *create_anim_scroll(int down, void (*animation_stopped)(Animation *ani
   //also shift the height to the correct level
   level_height = ((tide_data.heights.values[data_index] - min_height)*(MAX_LEVEL - MIN_LEVEL))/(max_height-min_height) + MIN_LEVEL;
 
-  GRect from_frame = layer_get_frame((Layer*) height_text_layer);
-  GRect to_frame = GRect(from_frame.origin.x, SCREEN_HEIGHT - level_height, from_frame.size.w, from_frame.size.h);
-  PropertyAnimation *shift_height_animation = property_animation_create_layer_frame((Layer*) height_text_layer, &from_frame, &to_frame);
-  animation_set_delay((Animation*) shift_height_animation, 150);
-  animation_set_duration((Animation*) shift_height_animation, 1000);
-
 
   GRect from_frame_blue = layer_get_frame((Layer*) blue_layer);
   GRect to_frame_blue = GRect(from_frame_blue.origin.x, SCREEN_HEIGHT - level_height, from_frame_blue.size.w, from_frame_blue.size.h);
@@ -77,7 +71,7 @@ Animation *create_anim_scroll(int down, void (*animation_stopped)(Animation *ani
   animation_set_delay((Animation*) shift_blue_animation, 150);
   animation_set_duration((Animation*) shift_blue_animation, 1000);
 
-  return animation_spawn_create(scroll_in_and_out, (Animation*) shift_height_animation, (Animation*) shift_blue_animation, NULL);
+  return animation_spawn_create(scroll_in_and_out, (Animation*) shift_blue_animation, NULL);
 }
 
 Animation *create_anim_load() {

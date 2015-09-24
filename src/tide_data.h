@@ -3,6 +3,8 @@
 #define MAX_TIDE_EVENTS 20
 #define MAX_NAME_LENGTH 48
 
+#define TIDE_ERROR -100
+
 enum {
     NAME,
     UNIT,
@@ -37,3 +39,5 @@ bool load_tide_data(TideData *dest);
 int find_min(int *array, int n_elements);
 
 int find_max(int *array, int n_elements);
+
+int get_tide_at_time(TideData *tide_data, time_t time);

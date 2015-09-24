@@ -10,7 +10,7 @@
 
 #define LEFT_MARGIN 5
 
-#define tide_event_text_layer_bounds (GRect) { .origin = { LEFT_MARGIN, 40 }, .size = { SCREEN_WIDTH - LEFT_MARGIN, 50 } }
+#define tide_event_text_layer_bounds (GRect) { .origin = { LEFT_MARGIN, 45 }, .size = { SCREEN_WIDTH - LEFT_MARGIN, 55 } }
 #define at_text_layer_bounds (GRect) { .origin = { LEFT_MARGIN, 80 }, .size = { SCREEN_WIDTH - LEFT_MARGIN, 53 } }
 
 extern Layer *blue_layer;
@@ -19,8 +19,6 @@ extern Layer *line_layer;
 extern TextLayer *name_text_layer;
 extern TextLayer *tide_event_text_layer;
 extern TextLayer *at_text_layer;
-extern TextLayer *height_text_layer;
-extern TextLayer *counter_text_layer;
 
 extern TideData tide_data;
 
