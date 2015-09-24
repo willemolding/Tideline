@@ -20,7 +20,7 @@ extern TextLayer *name_text_layer;
 extern TextLayer *tide_event_text_layer;
 extern TextLayer *at_text_layer;
 
-extern TideData tide_data;
+extern int current_height;
 
 extern int data_index;
 extern int has_data;

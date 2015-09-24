@@ -15,6 +15,7 @@ TextLayer *tide_event_text_layer;
 TextLayer *at_text_layer;
 
 TideData tide_data;
+int current_height;
 
 // string buffers
 static char timestring[20];
@@ -25,7 +26,6 @@ static char error_message[50];
 int level_height = SCREEN_HEIGHT / 2; // how many pixels above the bottom to draw the blue layer
 int min_height = 10000;
 int max_height = 0;
-int data_index = 0;
 int has_data = 0;
 
 static void update_display_data() {
@@ -42,19 +42,52 @@ static void update_display_data() {
 
     text_layer_set_text(at_text_layer, timestring);
 
-    int x = get_tide_at_time(&tide_data, t);
-    int d1 = abs(x/100);
-    int d2 = abs(x) - d1*100;
+    int current_height = get_tide_at_time(&tide_data, t);
+    int d1 = abs(current_height/100);
+    int d2 = abs(current_height) - d1*100;
 
     //make sure the sign is right even for d1=0
-    if(x>=0)
+    if(current_height>=0)
       snprintf(height_text,10,"%d.%d%s",d1,d2, tide_data.unit);  
     else
       snprintf(height_text,10,"-%d.%d%s",d1,d2, tide_data.unit);  
 
     text_layer_set_text(tide_event_text_layer, height_text);
+}
 
 
+//ensure that pressing back during an error dialog quits the app
+void error_back_click_handler(ClickRecognizerRef recognizer, void *context) {
+  window_stack_pop_all(true);
+}
+void error_layer_config_provider(Window *window) {
+  window_single_click_subscribe(BUTTON_ID_BACK, error_back_click_handler);
+}
+
+
+static void push_error(char *error_message){
+
+    Window *error_window = window_create();
+    window_set_click_config_provider(error_window, (ClickConfigProvider) error_layer_config_provider);
+    window_set_background_color(error_window, COLOR_FALLBACK(GColorOrange,GColorWhite));
+    Layer *error_window_layer = window_get_root_layer(error_window);
+    GRect bounds = layer_get_bounds(error_window_layer);
+
+    TextLayer *error_text_layer = text_layer_create((GRect) { .origin = { LEFT_MARGIN, 50 }, .size = { bounds.size.w - LEFT_MARGIN, bounds.size.h } });
+    text_layer_set_text_alignment(error_text_layer, GTextAlignmentCenter);
+    text_layer_set_text(error_text_layer, error_message);
+    text_layer_set_font(error_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28));
+    text_layer_set_background_color(error_text_layer, GColorClear);
+    layer_add_child(error_window_layer, text_layer_get_layer(error_text_layer));
+
+    GBitmap *s_icon_bitmap = gbitmap_create_with_resource(RESOURCE_ID_WARNING);
+    GRect bitmap_bounds = gbitmap_get_bounds(s_icon_bitmap);
+    BitmapLayer *s_icon_layer = bitmap_layer_create((GRect) { .origin = { bounds.origin.x, 20}, .size = { bounds.size.w , 30 } });
+    bitmap_layer_set_bitmap(s_icon_layer, s_icon_bitmap);
+    bitmap_layer_set_compositing_mode(s_icon_layer, GCompOpSet);
+    layer_add_child(error_window_layer, bitmap_layer_get_layer(s_icon_layer));
+
+    window_stack_push(error_window, true);
 }
 
 /**
@@ -112,25 +145,12 @@ static void inbox_received_callback(DictionaryIterator *iterator, void *context)
   	max_height = find_max(tide_data.heights.values, tide_data.n_events);    
 
     has_data = 1;
-    data_index = 0;
     animation_unschedule_all();
     animation_schedule(create_anim_scroll(1, animation_stopped));
 
   }
   else { // push an error message window to the stack
-      Window *error_window = window_create();
-      window_set_background_color(error_window, COLOR_FALLBACK(GColorOrange,GColorWhite));
-      Layer *error_window_layer = window_get_root_layer(error_window);
-      GRect bounds = layer_get_bounds(error_window_layer);
-
-      TextLayer *error_text_layer = text_layer_create(bounds);
-
-      text_layer_set_text(error_text_layer, error_message);
-      text_layer_set_font(error_text_layer, fonts_get_system_font(FONT_KEY_GOTHIC_28_BOLD));
-      text_layer_set_background_color(error_text_layer, GColorClear);
-      layer_add_child(error_window_layer, text_layer_get_layer(error_text_layer));
-
-      window_stack_push(error_window, true);
+      push_error(error_message);
   }
 }
 
@@ -230,7 +250,6 @@ static void init(void) {
   // displays cached data before waiting for more. This makes data still available without phone connection.
   if(load_tide_data(&tide_data)) {
     has_data = 1;
-    data_index = 0;
     animation_unschedule_all();
     animation_schedule(create_anim_scroll(1, animation_stopped));
   }

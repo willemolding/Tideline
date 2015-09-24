@@ -62,7 +62,7 @@ Animation *create_anim_scroll(int down, void (*animation_stopped)(Animation *ani
   Animation *scroll_in_and_out = animation_sequence_create(scroll_out, scroll_in, NULL);
 
   //also shift the height to the correct level
-  level_height = ((tide_data.heights.values[data_index] - min_height)*(MAX_LEVEL - MIN_LEVEL))/(max_height-min_height) + MIN_LEVEL;
+  level_height = ((current_height - min_height)*(MAX_LEVEL - MIN_LEVEL))/(max_height-min_height) + MIN_LEVEL;
 
 
   GRect from_frame_blue = layer_get_frame((Layer*) blue_layer);
