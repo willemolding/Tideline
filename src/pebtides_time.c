@@ -1,6 +1,7 @@
 #include <pebble.h>
 #include "tide_data.h"
 #include "app_animations.h"
+#include "tide_detail_menu.h"
 
 // the text layers to display the info
 static Window *window;
@@ -88,15 +89,6 @@ static void push_error(char *error_message){
     layer_add_child(error_window_layer, bitmap_layer_get_layer(s_icon_layer));
 
     window_stack_push(error_window, true);
-}
-
-/**
-Function to be called when scroll animations end. This is passed as a parameter to the create_scroll_anim function
-This makes the transitions much more visually pleasing than changing the data before the animation
-*/
-void animation_stopped(Animation *animation, bool finished, void *data) {
-   update_display_data();
-   layer_mark_dirty(window_get_root_layer(window));
 }
 
 static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
@@ -235,6 +227,13 @@ static void destroy_layers(){
   text_layer_destroy(at_text_layer);
 }
 
+void select_single_click_handler(ClickRecognizerRef recognizer, void *context) {
+  window_stack_push(setup_detail_window(), true);
+}
+
+void config_provider(Window *window) {
+  window_single_click_subscribe(BUTTON_ID_SELECT, select_single_click_handler);
+}
 
 static void init(void) {
 
@@ -242,18 +241,24 @@ static void init(void) {
   window_set_window_handlers(window, (WindowHandlers) {
     .load = window_load,
   });
-  const bool animated = true;
+  window_set_click_config_provider(window, (ClickConfigProvider) config_provider);
 
-  window_stack_push(window, animated);
+  const bool animated = true;
 
   app_message_register_inbox_received(inbox_received_callback);
   app_message_register_inbox_dropped(inbox_dropped_callback);
   app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
 
+  if(!bluetooth_connection_service_peek()){
+    push_error("No phone connection");
+  }
+
   // displays cached data before waiting for more. This makes data still available without phone connection.
   if(load_tide_data(&tide_data)) {
     has_data = 1;
   }
+
+  window_stack_push(window, animated);
 
 }
 
