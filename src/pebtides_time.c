@@ -19,7 +19,7 @@ TextLayer *counter_text_layer;
 TideData tide_data;
 
 // string buffers
-static char timestring[30];
+static char timestring[40];
 static char counter_text[6];
 static char height_text[10];
 static char error_message[50];
@@ -44,10 +44,10 @@ static void update_display_data() {
     time_t t = tide_data.times.values[data_index];
 
     if(clock_is_24h_style()) {
-      strftime(timestring + 3, 26, "%H:%M\n%B %d", localtime(&t));
+      strftime(timestring + 3, 35, "%H:%M\n%B %d", localtime(&t));
     }
     else {
-      strftime(timestring + 3, 26, "%I:%M %p\n%B %d", localtime(&t));
+      strftime(timestring + 3, 35, "%I:%M %p\n%B %d", localtime(&t));
     }
 
     text_layer_set_text(at_text_layer, timestring);
